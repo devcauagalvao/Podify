@@ -1,0 +1,119 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  @apply bg-surface text-ink-900 antialiased;
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+input[type='date']::-webkit-calendar-picker-indicator,
+input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(0.5);
+  cursor: pointer;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-brand-200 rounded-full;
+}
+
+@layer base {
+  /* transição suave padrão (150ms) em qualquer botão/link clicável do app,
+     sem precisar repetir `transition` em cada className individualmente */
+  button,
+  a {
+    @apply transition-all duration-150;
+  }
+
+  /* foco visível consistente via teclado em qualquer elemento interativo,
+     sem depender de cada componente declarar seu próprio anel de foco */
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-none ring-2 ring-brand-400 ring-offset-2 ring-offset-white;
+  }
+}
+
+@layer components {
+  .input-field {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm
+      placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent
+      transition;
+  }
+  .label-field {
+    @apply mb-1.5 block text-sm font-semibold text-slate-700;
+  }
+  .card {
+    @apply rounded-2xl bg-white shadow-sm border border-slate-100;
+  }
+  .btn-primary {
+    @apply rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-semibold text-white
+      hover:bg-ink-800 transition disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-brand {
+    @apply rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white
+      hover:bg-brand-600 transition disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+}
+
+@layer utilities {
+  @keyframes modal-backdrop-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes modal-backdrop-out {
+    from {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes modal-panel-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96) translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+  @keyframes modal-panel-out {
+    from {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.96) translateY(4px);
+    }
+  }
+  .animate-modal-backdrop-in {
+    animation: modal-backdrop-in 180ms ease-out;
+  }
+  .animate-modal-backdrop-out {
+    animation: modal-backdrop-out 150ms ease-in forwards;
+  }
+  .animate-modal-panel-in {
+    animation: modal-panel-in 180ms ease-out;
+  }
+  .animate-modal-panel-out {
+    animation: modal-panel-out 150ms ease-in forwards;
+  }
+}
