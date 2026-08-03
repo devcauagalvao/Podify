@@ -312,7 +312,7 @@ function formatDateBR(iso: string | null | undefined): string {
 export interface AnamnesePdfData {
   nomeClinica: string | null
   logoUrl?: string | null
-  nomePaciente: string
+  nomeCliente: string
   nomeProfissional: string | null
   data: string
   dadosPessoais: Obj
@@ -326,7 +326,7 @@ export interface AnamnesePdfData {
   orientacao: string
   dataRetorno: string
   autorizacaoImagem: boolean
-  assinaturaPaciente: string | null
+  assinaturaCliente: string | null
   assinaturaProfissional: string | null
   fotos: string[]
 }
@@ -377,7 +377,7 @@ export function AnamnesePdfDocument({ d }: { d: AnamnesePdfData }) {
 
   return (
     <Document
-      title={`Anamnese - ${d.nomePaciente}`}
+      title={`Anamnese - ${d.nomeCliente}`}
       author="Podify"
     >
       <Page size="A4" style={styles.page} wrap>
@@ -390,7 +390,7 @@ export function AnamnesePdfDocument({ d }: { d: AnamnesePdfData }) {
             </View>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.patientName}>{d.nomePaciente}</Text>
+            <Text style={styles.patientName}>{d.nomeCliente}</Text>
             <Text style={styles.fichaDate}>{formatDateBR(d.data)}</Text>
           </View>
         </View>
@@ -464,14 +464,14 @@ export function AnamnesePdfDocument({ d }: { d: AnamnesePdfData }) {
           <Text style={styles.sectionTitle}>ASSINATURAS</Text>
           <View style={styles.assinaturasRow}>
             <View style={styles.assinaturaCol}>
-              {d.assinaturaPaciente ? (
-                <Image src={d.assinaturaPaciente} style={styles.assinaturaImg} />
+              {d.assinaturaCliente ? (
+                <Image src={d.assinaturaCliente} style={styles.assinaturaImg} />
               ) : (
                 <View style={styles.assinaturaImgPlaceholder} />
               )}
               <View style={styles.assinaturaLine} />
-              <Text style={styles.assinaturaLabel}>{d.nomePaciente}</Text>
-              <Text style={styles.assinaturaSub}>Paciente</Text>
+              <Text style={styles.assinaturaLabel}>{d.nomeCliente}</Text>
+              <Text style={styles.assinaturaSub}>Cliente</Text>
             </View>
             <View style={styles.assinaturaCol}>
               {d.assinaturaProfissional ? (
@@ -486,7 +486,7 @@ export function AnamnesePdfDocument({ d }: { d: AnamnesePdfData }) {
           </View>
           {d.autorizacaoImagem && (
             <Text style={{ ...styles.textBlock, paddingTop: 0 }}>
-              Autorização de uso de imagem concedida pelo paciente para fins publicitários,
+              Autorização de uso de imagem concedida pelo cliente para fins publicitários,
               educacionais e outros fins relacionados à clínica de podologia, nos termos da
               legislação vigente.
             </Text>

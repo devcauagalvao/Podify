@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Upload, Send, Bot } from 'lucide-react'
+import { Camera, Upload, Send } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { toastError } from '@/store/toastStore'
 import { TypingDots } from '@/components/Skeleton'
 import { buscarRespostaFaq } from './liaFaqBase'
+import liaAvatarUrl from '@/assets/logos/lia-avatar.png'
 
 interface Mensagem {
   role: 'user' | 'assistant'
@@ -127,9 +128,11 @@ export default function LiaPodologa() {
     // em vez de estourar o container e empurrar o campo de input pra fora.
     <div className="flex h-full min-h-0 flex-col">
       <div className="mb-4 flex shrink-0 items-center gap-4 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-300 p-5 text-white">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20">
-          <Bot size={24} />
-        </div>
+        <img
+          src={liaAvatarUrl}
+          alt="LIA"
+          className="h-12 w-12 shrink-0 rounded-full object-cover ring-2 ring-white/30"
+        />
         <div>
           <h1 className="font-bold">LIA Podóloga</h1>
           <p className="text-sm text-white/85">Especialista em podologia — tire suas dúvidas</p>
@@ -139,9 +142,11 @@ export default function LiaPodologa() {
       <div ref={scrollRef} className="card min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
         {mensagens.length === 0 && (
           <div className="flex flex-col items-center py-10 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-600">
-              <Bot size={32} />
-            </div>
+            <img
+              src={liaAvatarUrl}
+              alt="LIA"
+              className="mb-4 h-16 w-16 rounded-full object-cover ring-2 ring-brand-100"
+            />
             <h2 className="font-bold text-ink-900">Olá, sou a LIA</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
               Sou especialista em podologia e estou aqui para tirar suas dúvidas. Você pode me

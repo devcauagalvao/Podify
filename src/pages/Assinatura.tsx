@@ -10,6 +10,9 @@ import {
   QrCode,
   CreditCard,
   CalendarClock,
+  CalendarDays,
+  ClipboardList,
+  AlertTriangle,
 } from 'lucide-react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -27,7 +30,7 @@ import {
 } from '@/lib/mascaras'
 
 const RECURSOS = [
-  'Pacientes ilimitados',
+  'Clientes ilimitados',
   'Fichas de anamnese completas',
   'Agenda completa',
   'Controle financeiro',
@@ -46,7 +49,7 @@ const FAQ = [
   {
     pergunta: 'Meus dados ficam salvos se eu cancelar?',
     resposta:
-      'Sim. Seus pacientes, fichas de anamnese, agenda e histórico financeiro continuam guardados com segurança. Se você assinar novamente, tudo estará exatamente como você deixou.',
+      'Sim. Seus clientes, fichas de anamnese, agenda e histórico financeiro continuam guardados com segurança. Se você assinar novamente, tudo estará exatamente como você deixou.',
   },
   {
     pergunta: 'Como funcionam os 7 dias grátis?',
@@ -65,13 +68,38 @@ function formatDataBR(iso: string | null | undefined) {
   return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 }
 
+// Não existe uma coluna dedicada de "início da assinatura" — usa a data de
+// criação da conta como aproximação (na prática o usuário assina logo que
+// cria a conta, então cobre a grande maioria dos casos).
+function mesesDesde(iso: string | null | undefined): number {
+  if (!iso) return 0
+  const inicio = new Date(iso)
+  if (Number.isNaN(inicio.getTime())) return 0
+  const agora = new Date()
+  let meses = (agora.getFullYear() - inicio.getFullYear()) * 12 + (agora.getMonth() - inicio.getMonth())
+  if (agora.getDate() < inicio.getDate()) meses -= 1
+  return Math.max(0, meses)
+}
+
 export default function Assinatura() {
   const profile = useAuthStore((s) => s.profile)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [cancelarOpen, setCancelarOpen] = useState(false)
+  const [totalAnamneses, setTotalAnamneses] = useState<number | null>(null)
 
   const ilimitado = profile?.plano === 'pro' && !profile?.assinatura_expira_em
   const assinaturaAtivaPaga =
     profile?.plano === 'pro' && !!profile?.assinatura_expira_em && profile?.assinatura_status === 'ativa'
+  const planoAtivo = ilimitado || assinaturaAtivaPaga
+
+  useEffect(() => {
+    if (!planoAtivo) return
+    supabase
+      .from('anamneses')
+      .select('id', { count: 'exact', head: true })
+      .is('deleted_at', null)
+      .then(({ count }) => setTotalAnamneses(count ?? 0))
+  }, [planoAtivo])
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -80,7 +108,7 @@ export default function Assinatura() {
         <p className="text-sm text-slate-500">Gerencie seu plano PODIFY</p>
       </div>
 
-      {ilimitado || assinaturaAtivaPaga ? (
+      {planoAtivo ? (
         <>
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand-600 to-brand-300 p-6 text-white">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -108,6 +136,27 @@ export default function Assinatura() {
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="card flex items-center gap-3 p-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <CalendarDays size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl font-extrabold leading-none text-ink-900">{mesesDesde(profile?.created_at)}</p>
+                <p className="mt-1 text-xs text-slate-500">{mesesDesde(profile?.created_at) === 1 ? 'mês como assinante' : 'meses como assinante'}</p>
+              </div>
+            </div>
+            <div className="card flex items-center gap-3 p-5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
+                <ClipboardList size={18} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl font-extrabold leading-none text-ink-900">{totalAnamneses ?? '—'}</p>
+                <p className="mt-1 text-xs text-slate-500">{totalAnamneses === 1 ? 'ficha de anamnese realizada' : 'fichas de anamnese realizadas'}</p>
+              </div>
+            </div>
+          </div>
+
           <div className="card p-6">
             <p className="mb-4 flex items-center gap-2 font-bold text-ink-900">⭐ O que está incluído</p>
             <div className="space-y-3">
@@ -127,6 +176,15 @@ export default function Assinatura() {
                 : 'Seu pagamento está confirmado e a assinatura será renovada automaticamente. Aproveite todos os recursos!'}
             </p>
           </div>
+
+          {assinaturaAtivaPaga && (
+            <button
+              onClick={() => setCancelarOpen(true)}
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-xl border border-slate-200 text-sm font-medium text-rose-500 hover:bg-rose-50"
+            >
+              Cancelar assinatura
+            </button>
+          )}
         </>
       ) : (
         <>
@@ -205,7 +263,74 @@ export default function Assinatura() {
       )}
 
       {checkoutOpen && <CheckoutModal onClose={() => setCheckoutOpen(false)} />}
+      {cancelarOpen && <CancelarAssinaturaModal onClose={() => setCancelarOpen(false)} />}
     </div>
+  )
+}
+
+function CancelarAssinaturaModal({ onClose }: { onClose: () => void }) {
+  const refreshProfile = useAuthStore((s) => s.refreshProfile)
+  const [cancelando, setCancelando] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function confirmar() {
+    setCancelando(true)
+    setErro(null)
+    const { data, error } = await supabase.functions.invoke('asaas-cancel')
+
+    if (error || !data?.ok) {
+      let mensagem = 'Não foi possível cancelar a assinatura. Tente novamente.'
+      if (error instanceof FunctionsHttpError) {
+        try {
+          const corpo = await error.context.json()
+          if (corpo?.error) mensagem = corpo.error
+        } catch {
+          // corpo não veio em JSON, mantém a mensagem genérica
+        }
+      } else if (data?.error) {
+        mensagem = data.error
+      }
+      setErro(mensagem)
+      setCancelando(false)
+      return
+    }
+
+    await refreshProfile()
+    toastSuccess('Assinatura cancelada. Seu acesso Pro continua até o fim do período já pago.')
+    setCancelando(false)
+    onClose()
+  }
+
+  return (
+    <Modal title="Cancelar assinatura" onClose={onClose}>
+      <div className="space-y-5">
+        <div className="flex items-start gap-3 rounded-xl bg-rose-50 p-4">
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-500" />
+          <p className="text-sm text-rose-700">
+            Tem certeza que deseja cancelar sua assinatura PODIFY Pro? Você não será mais cobrado
+            e seus dados continuam guardados com segurança, mas o acesso aos recursos Pro é
+            encerrado.
+          </p>
+        </div>
+        {erro && <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{erro}</p>}
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={cancelando}
+            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl border border-slate-200 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+          >
+            Manter assinatura
+          </button>
+          <button
+            onClick={confirmar}
+            disabled={cancelando}
+            className="flex min-h-[44px] flex-1 items-center justify-center rounded-xl bg-rose-500 text-sm font-semibold text-white hover:bg-rose-600 disabled:opacity-50"
+          >
+            {cancelando ? 'Cancelando...' : 'Cancelar assinatura'}
+          </button>
+        </div>
+      </div>
+    </Modal>
   )
 }
 

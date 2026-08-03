@@ -15,7 +15,7 @@ export default function AnamneseList() {
   const [fichas, setFichas] = useState<AnamneseComCliente[]>([])
   const [busca, setBusca] = useState('')
   const [buscaDebounced, setBuscaDebounced] = useState('')
-  const [totalPacientes, setTotalPacientes] = useState(0)
+  const [totalClientes, setTotalClientes] = useState(0)
   const [loading, setLoading] = useState(true)
   const [clientesSemFicha, setClientesSemFicha] = useState<ClienteBasico[]>([])
   const [buscandoClientes, setBuscandoClientes] = useState(false)
@@ -30,8 +30,8 @@ export default function AnamneseList() {
         .order('data', { ascending: false })
       if (error) toastError(`Não foi possível carregar as fichas de anamnese: ${error.message}`)
       setFichas((data as AnamneseComCliente[]) ?? [])
-      const pacientesUnicos = new Set((data ?? []).map((f) => f.cliente_id))
-      setTotalPacientes(pacientesUnicos.size)
+      const clientesUnicos = new Set((data ?? []).map((f) => f.cliente_id))
+      setTotalClientes(clientesUnicos.size)
       setLoading(false)
     }
     carregar()
@@ -44,7 +44,7 @@ export default function AnamneseList() {
   }, [busca])
 
   // Busca direto na tabela de clientes (ilike no nome) em paralelo — não só
-  // nas fichas já existentes — pra achar pacientes que baterem com o nome
+  // nas fichas já existentes — pra achar clientes que baterem com o nome
   // mas ainda não têm nenhuma ficha de anamnese.
   useEffect(() => {
     if (!buscaDebounced) {
@@ -62,7 +62,7 @@ export default function AnamneseList() {
         .order('nome')
       if (cancelado) return
       if (error) {
-        toastError(`Não foi possível buscar pacientes: ${error.message}`)
+        toastError(`Não foi possível buscar clientes: ${error.message}`)
         setClientesSemFicha([])
       } else {
         const idsComFicha = new Set(fichas.map((f) => f.cliente_id))
@@ -87,7 +87,7 @@ export default function AnamneseList() {
         <div>
           <h1 className="text-2xl font-extrabold text-ink-900">Anamnese</h1>
           <p className="text-sm text-slate-500">
-            {totalPacientes} paciente(s) · {fichas.length} ficha(s)
+            {totalClientes} cliente(s) · {fichas.length} ficha(s)
           </p>
         </div>
         <Link to="/anamnese/nova" className="btn-brand flex items-center gap-2">
@@ -134,7 +134,7 @@ export default function AnamneseList() {
                 {filtradas.map((f) => (
                   <div key={f.id} className="flex items-center gap-2 px-5 py-2 hover:bg-slate-50">
                     <Link to={`/anamnese/${f.id}`} className="min-w-0 flex-1 py-2">
-                      <p className="truncate font-semibold text-ink-900">{f.clientes?.nome ?? 'Paciente'}</p>
+                      <p className="truncate font-semibold text-ink-900">{f.clientes?.nome ?? 'Cliente'}</p>
                       <p className="text-sm text-slate-400">
                         {new Date(f.data).toLocaleDateString('pt-BR')} ·{' '}
                         {f.status === 'finalizada' ? 'Finalizada' : 'Em andamento'}
@@ -150,7 +150,7 @@ export default function AnamneseList() {
           {temBusca && (
             <div>
               <p className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-400">
-                <UserPlus size={14} /> PACIENTES SEM FICHA AINDA
+                <UserPlus size={14} /> CLIENTES SEM FICHA AINDA
               </p>
               {buscandoClientes ? (
                 <div className="card divide-y divide-slate-100">
@@ -159,7 +159,7 @@ export default function AnamneseList() {
                   </div>
                 </div>
               ) : clientesSemFicha.length === 0 ? (
-                <p className="text-sm text-slate-400">Nenhum paciente sem ficha encontrado para "{busca.trim()}".</p>
+                <p className="text-sm text-slate-400">Nenhum cliente sem ficha encontrado para "{busca.trim()}".</p>
               ) : (
                 <div className="card divide-y divide-slate-100">
                   {clientesSemFicha.map((c) => (

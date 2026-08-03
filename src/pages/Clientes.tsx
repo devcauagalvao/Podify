@@ -69,7 +69,7 @@ export default function Clientes() {
             )}
           </button>
           <button onClick={() => setModalOpen(true)} className="btn-brand flex items-center gap-2">
-            <Plus size={16} /> Novo Paciente
+            <Plus size={16} /> Novo Cliente
           </button>
         </div>
       </div>
@@ -176,17 +176,17 @@ function ConfirmarExclusaoDoCliente({
     const erro = await excluirClienteComCascata(cliente.id)
     if (erro) {
       setExcluindo(false)
-      toastError(`Não foi possível excluir o paciente: ${erro}`)
+      toastError(`Não foi possível excluir o cliente: ${erro}`)
       return
     }
-    toastSuccess('Paciente movido para a lixeira.')
+    toastSuccess('Cliente movido para a lixeira.')
     onExcluido()
   }
 
   return (
     <ConfirmarExclusaoModal
       titulo={`Excluir ${cliente.nome}?`}
-      mensagem={`O paciente e suas fichas de anamnese vão para a lixeira e podem ser restaurados em até 7 dias. Depois disso, os dados são apagados permanentemente e não podem ser recuperados.`}
+      mensagem={`O cliente e suas fichas de anamnese vão para a lixeira e podem ser restaurados em até 7 dias. Depois disso, os dados são apagados permanentemente e não podem ser recuperados.`}
       excluindo={excluindo}
       onConfirmar={confirmar}
       onClose={onClose}
@@ -220,7 +220,7 @@ function LixeiraModal({ onClose, onRestaurado }: { onClose: () => void; onRestau
     const erro = await restaurarClienteComCascata(cliente.id)
     setRestaurandoId(null)
     if (erro) {
-      toastError(`Não foi possível restaurar o paciente: ${erro}`)
+      toastError(`Não foi possível restaurar o cliente: ${erro}`)
       return
     }
     toastSuccess(`${cliente.nome} restaurado com sucesso!`)
@@ -292,7 +292,7 @@ function NovoClienteModal({
   }
 
   function handleClose() {
-    if (!confirmDiscard('Descartar o cadastro deste paciente?')) return
+    if (!confirmDiscard('Descartar o cadastro deste cliente?')) return
     onClose()
   }
 
@@ -308,16 +308,16 @@ function NovoClienteModal({
     })
     if (error) {
       setSaving(false)
-      toastError(`Não foi possível cadastrar o paciente: ${error.message}`)
+      toastError(`Não foi possível cadastrar o cliente: ${error.message}`)
       return
     }
     markClean()
-    toastSuccess('Paciente cadastrado com sucesso!')
+    toastSuccess('Cliente cadastrado com sucesso!')
     flashThen(onSaved)
   }
 
   return (
-    <Modal title="Novo Paciente" onClose={handleClose}>
+    <Modal title="Novo Cliente" onClose={handleClose}>
       <div className="space-y-4">
         <div>
           <label className="label-field">Nome *</label>
@@ -366,7 +366,7 @@ function NovoClienteModal({
           ) : saving ? (
             'Salvando...'
           ) : (
-            'Cadastrar Paciente'
+            'Cadastrar Cliente'
           )}
         </button>
       </div>

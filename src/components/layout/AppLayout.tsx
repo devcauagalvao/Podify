@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Menu, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Sidebar } from './Sidebar'
+import logoHorizontalUrl from '@/assets/logos/podify-horizontal.png'
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -85,9 +86,11 @@ export function AppLayout({ children }: { children: ReactNode }) {
           >
             <Menu size={22} />
           </button>
-          <span className="text-lg font-extrabold text-ink-900">
-            <span className="text-brand-500">P</span>ODIFY
-          </span>
+          <img
+            src={logoHorizontalUrl}
+            alt="Podify"
+            className="h-auto w-[120px] max-w-full object-contain"
+          />
           <div className="w-11" />
         </header>
 

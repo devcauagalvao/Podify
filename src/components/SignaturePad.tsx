@@ -35,7 +35,7 @@ export function SignaturePad({
 }: {
   ownerId: string
   anamneseId: string
-  tipo: 'paciente' | 'profissional'
+  tipo: 'cliente' | 'profissional'
   onSaved: (url: string) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)

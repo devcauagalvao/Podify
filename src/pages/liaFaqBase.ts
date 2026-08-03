@@ -15,7 +15,7 @@ const BASE_CONHECIMENTO: FaqEntry[] = [
   {
     palavrasChave: ['onicocriptose', 'unha encravada', 'unha encravando', 'unha encravou'],
     resposta:
-      'Onicocriptose é o nome técnico da unha encravada — quando a borda da lâmina ungueal cresce ou é cortada de forma que perfura a pele lateral do dedo, causando dor, vermelhidão e, às vezes, infecção. As causas mais comuns são corte incorreto da unha (arredondado nas laterais em vez de reto), calçados apertados, pisada inadequada e predisposição do formato da unha. O tratamento vai desde a técnica de órtese ungueal e remoção parcial da borda encravada até, em casos mais graves ou recorrentes, a matricectomia parcial. É importante orientar o paciente a cortar a unha reta e não arredondar as pontas, para evitar recidiva.',
+      'Onicocriptose é o nome técnico da unha encravada — quando a borda da lâmina ungueal cresce ou é cortada de forma que perfura a pele lateral do dedo, causando dor, vermelhidão e, às vezes, infecção. As causas mais comuns são corte incorreto da unha (arredondado nas laterais em vez de reto), calçados apertados, pisada inadequada e predisposição do formato da unha. O tratamento vai desde a técnica de órtese ungueal e remoção parcial da borda encravada até, em casos mais graves ou recorrentes, a matricectomia parcial. É importante orientar o cliente a cortar a unha reta e não arredondar as pontas, para evitar recidiva.',
   },
   {
     palavrasChave: ['pé diabético', 'pe diabetico', 'diabetes no pé', 'diabetes no pe', 'cuidados com o pé diabético'],

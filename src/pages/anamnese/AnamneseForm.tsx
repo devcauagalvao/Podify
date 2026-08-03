@@ -89,7 +89,7 @@ export default function AnamneseForm() {
   const [orientacao, setOrientacaoState] = useState('')
   const [dataRetorno, setDataRetornoState] = useState('')
   const [autorizacaoImagem, setAutorizacaoImagemState] = useState(false)
-  const [assinaturaPaciente, setAssinaturaPaciente] = useState<string | null>(null)
+  const [assinaturaCliente, setAssinaturaCliente] = useState<string | null>(null)
   const [assinaturaProfissional, setAssinaturaProfissional] = useState<string | null>(null)
   const [fotos, setFotos] = useState<string[]>([])
 
@@ -130,7 +130,7 @@ export default function AnamneseForm() {
       .order('nome')
       .then(({ data, error }) => {
         if (error) {
-          toastError(`Não foi possível carregar a lista de pacientes: ${error.message}`)
+          toastError(`Não foi possível carregar a lista de clientes: ${error.message}`)
           return
         }
         setClientes(data ?? [])
@@ -169,7 +169,7 @@ export default function AnamneseForm() {
         setOrientacaoState(f.orientacao ?? '')
         setDataRetornoState(f.data_retorno ?? '')
         setAutorizacaoImagemState(f.autorizacao_uso_imagem)
-        setAssinaturaPaciente(f.assinatura_paciente_url)
+        setAssinaturaCliente(f.assinatura_paciente_url)
         setAssinaturaProfissional(f.assinatura_profissional_url)
         setCarregandoFicha(false)
       })
@@ -226,7 +226,7 @@ export default function AnamneseForm() {
 
   async function salvarFicha(opts: { statusFinal: 'em_andamento' | 'finalizada'; silent: boolean }) {
     if (!clienteId) {
-      if (!opts.silent) toastError('Selecione o paciente antes de salvar.')
+      if (!opts.silent) toastError('Selecione o cliente antes de salvar.')
       return false
     }
 
@@ -250,7 +250,7 @@ export default function AnamneseForm() {
       orientacao: orientacao || null,
       data_retorno: dataRetorno || null,
       autorizacao_uso_imagem: autorizacaoImagem,
-      assinatura_paciente_url: assinaturaPaciente,
+      assinatura_paciente_url: assinaturaCliente,
       assinatura_profissional_url: assinaturaProfissional,
     }
 
@@ -327,7 +327,7 @@ export default function AnamneseForm() {
   async function exportarPdf() {
     const cliente = clientes.find((c) => c.id === clienteId)
     if (!cliente) {
-      toastError('Selecione o paciente antes de exportar o PDF.')
+      toastError('Selecione o cliente antes de exportar o PDF.')
       return
     }
     setExporting(true)
@@ -335,7 +335,7 @@ export default function AnamneseForm() {
       const docData: AnamnesePdfData = {
         nomeClinica: profile?.nome_clinica ?? null,
         logoUrl: profile?.avatar_url ?? null,
-        nomePaciente: cliente.nome,
+        nomeCliente: cliente.nome,
         nomeProfissional: profile?.nome_completo ?? null,
         data,
         dadosPessoais,
@@ -349,7 +349,7 @@ export default function AnamneseForm() {
         orientacao,
         dataRetorno,
         autorizacaoImagem,
-        assinaturaPaciente,
+        assinaturaCliente,
         assinaturaProfissional,
         fotos,
       }
@@ -430,7 +430,7 @@ export default function AnamneseForm() {
       </div>
 
       <Section title="IDENTIFICAÇÃO">
-        <Field label="Paciente *">
+        <Field label="Cliente *">
           <select
             value={clienteId}
             onChange={(e) => setClienteIdDirty(e.target.value)}
@@ -750,7 +750,7 @@ export default function AnamneseForm() {
           </div>
           <div>
             <label className="label-field">Orientação</label>
-            <textarea className="input-field" rows={2} value={orientacao} onChange={(e) => setOrientacao(e.target.value)} placeholder="Oriente o paciente..." />
+            <textarea className="input-field" rows={2} value={orientacao} onChange={(e) => setOrientacao(e.target.value)} placeholder="Oriente o cliente..." />
           </div>
           <div className="max-w-xs">
             <label className="label-field">Data de Retorno</label>
@@ -766,17 +766,17 @@ export default function AnamneseForm() {
         </div>
         <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2">
           <div>
-            <p className="label-field">Assinatura do Paciente</p>
-            {assinaturaPaciente ? (
-              <img src={assinaturaPaciente} className="h-[120px] w-full rounded-xl border border-slate-200 object-contain" />
+            <p className="label-field">Assinatura do Cliente</p>
+            {assinaturaCliente ? (
+              <img src={assinaturaCliente} className="h-[120px] w-full rounded-xl border border-slate-200 object-contain" />
             ) : (
               <SignaturePad
                 ownerId={user!.id}
                 anamneseId={anamneseId}
-                tipo="paciente"
+                tipo="cliente"
                 onSaved={(url) => {
                   markDirty()
-                  setAssinaturaPaciente(url)
+                  setAssinaturaCliente(url)
                 }}
               />
             )}

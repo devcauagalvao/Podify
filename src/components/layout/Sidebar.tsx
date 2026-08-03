@@ -16,6 +16,7 @@ import {
 import { clsx } from 'clsx'
 import { useAuthStore } from '@/store/authStore'
 import { SUPPORT_WHATSAPP_URL, SUPPORT_EMAIL } from '@/lib/contact'
+import logoHorizontalUrl from '@/assets/logos/podify-horizontal.png'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -35,12 +36,11 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="px-6 py-6">
-        <div className="flex items-center gap-1.5">
-          <FootLogo />
-          <span className="text-xl font-extrabold tracking-tight text-ink-900">
-            <span className="text-brand-500">P</span>ODIFY
-          </span>
-        </div>
+        <img
+          src={logoHorizontalUrl}
+          alt="Podify"
+          className="h-auto w-[150px] max-w-full object-contain"
+        />
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
@@ -93,17 +93,5 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         </button>
       </div>
     </div>
-  )
-}
-
-function FootLogo() {
-  return (
-    <img
-      src="/podify-logo.jpg"
-      alt=""
-      width={26}
-      height={26}
-      className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
-    />
   )
 }

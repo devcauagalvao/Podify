@@ -65,7 +65,7 @@ export default function ClientePerfil() {
       supabase.from('consultas').select('*').eq('cliente_id', id).order('data', { ascending: false }),
     ])
     if (clienteRes.error || !clienteRes.data) {
-      toastError(`Não foi possível carregar o paciente: ${clienteRes.error?.message ?? 'paciente não encontrado'}`)
+      toastError(`Não foi possível carregar o cliente: ${clienteRes.error?.message ?? 'cliente não encontrado'}`)
       setCliente(null)
       setLoading(false)
       return
@@ -116,7 +116,7 @@ export default function ClientePerfil() {
         </Link>
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <User size={40} className="mb-3 text-slate-300" />
-          <p className="font-semibold text-slate-500">Paciente não encontrado</p>
+          <p className="font-semibold text-slate-500">Cliente não encontrado</p>
         </div>
       </div>
     )
@@ -131,7 +131,7 @@ export default function ClientePerfil() {
           </Link>
           <div className="min-w-0">
             <h1 className="truncate text-xl font-extrabold text-ink-900">{cliente.nome}</h1>
-            <p className="text-sm text-slate-500">Paciente cadastrado</p>
+            <p className="text-sm text-slate-500">Cliente cadastrado</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -144,7 +144,7 @@ export default function ClientePerfil() {
           <button
             onClick={() => setExcluirOpen(true)}
             className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-400 hover:bg-rose-50 hover:text-rose-500"
-            title="Excluir paciente"
+            title="Excluir cliente"
           >
             <Trash2 size={16} />
           </button>
@@ -271,17 +271,17 @@ function ExcluirClienteModal({
     const erro = await excluirClienteComCascata(cliente.id)
     if (erro) {
       setExcluindo(false)
-      toastError(`Não foi possível excluir o paciente: ${erro}`)
+      toastError(`Não foi possível excluir o cliente: ${erro}`)
       return
     }
-    toastSuccess('Paciente movido para a lixeira.')
+    toastSuccess('Cliente movido para a lixeira.')
     onExcluido()
   }
 
   return (
     <ConfirmarExclusaoModal
       titulo={`Excluir ${cliente.nome}?`}
-      mensagem="O paciente e suas fichas de anamnese vão para a lixeira e podem ser restaurados em até 7 dias. Depois disso, os dados são apagados permanentemente e não podem ser recuperados."
+      mensagem="O cliente e suas fichas de anamnese vão para a lixeira e podem ser restaurados em até 7 dias. Depois disso, os dados são apagados permanentemente e não podem ser recuperados."
       excluindo={excluindo}
       onConfirmar={confirmar}
       onClose={onClose}
@@ -338,7 +338,7 @@ function EditarClienteModal({
   }
 
   function handleClose() {
-    if (!confirmDiscard('Descartar as alterações deste paciente?')) return
+    if (!confirmDiscard('Descartar as alterações deste cliente?')) return
     onClose()
   }
 
@@ -360,16 +360,16 @@ function EditarClienteModal({
       .single()
     if (error || !data) {
       setSaving(false)
-      toastError(`Não foi possível atualizar o paciente: ${error?.message ?? 'erro desconhecido'}`)
+      toastError(`Não foi possível atualizar o cliente: ${error?.message ?? 'erro desconhecido'}`)
       return
     }
     markClean()
-    toastSuccess('Paciente atualizado com sucesso!')
+    toastSuccess('Cliente atualizado com sucesso!')
     flashThen(() => onSaved(data))
   }
 
   return (
-    <Modal title="Editar Paciente" onClose={handleClose}>
+    <Modal title="Editar Cliente" onClose={handleClose}>
       <div className="space-y-4">
         <div>
           <label className="label-field">Nome *</label>
@@ -421,7 +421,7 @@ function EditarClienteModal({
             rows={3}
             value={form.observacoes}
             onChange={(e) => updateForm({ observacoes: e.target.value })}
-            placeholder="Notas sobre o paciente"
+            placeholder="Notas sobre o cliente"
           />
         </div>
         <button onClick={salvar} disabled={saving} className="btn-brand flex w-full items-center justify-center gap-2">

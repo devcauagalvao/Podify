@@ -40,11 +40,13 @@ supabase functions deploy lia-chat
 
 ## Assinatura (Asaas) — Pix e cartão de crédito
 
-Plano único PODIFY Pro, R$ 29,90/mês recorrente. Duas Edge Functions cuidam disso:
+Plano único PODIFY Pro, R$ 29,90/mês recorrente. Três Edge Functions cuidam disso:
 
 - `supabase/functions/asaas-checkout/` — cria o customer (se ainda não existir) e a
   assinatura no Asaas, chamada pelo frontend (`Assinatura.tsx`) quando o usuário clica em
   "Assinar agora". Exige o usuário estar logado (JWT do Supabase).
+- `supabase/functions/asaas-cancel/` — cancela a assinatura no Asaas e já atualiza o
+  profile na hora, chamada pelo frontend quando o usuário clica em "Cancelar assinatura".
 - `supabase/functions/asaas-webhook/` — recebe os eventos de pagamento do Asaas e atualiza
   `profiles.plano` / `assinatura_status` / `assinatura_expira_em`.
 
@@ -63,6 +65,7 @@ qualquer um na internet. Repita o mesmo valor no passo 3.
 
 ```bash
 supabase functions deploy asaas-checkout
+supabase functions deploy asaas-cancel
 supabase functions deploy asaas-webhook --no-verify-jwt
 ```
 
