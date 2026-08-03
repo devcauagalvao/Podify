@@ -36,7 +36,7 @@ export function SignaturePad({
   ownerId: string
   anamneseId: string
   tipo: 'cliente' | 'profissional'
-  onSaved: (url: string) => void
+  onSaved: (path: string) => void
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const strokesRef = useRef<Point[][]>([])
@@ -160,9 +160,8 @@ export function SignaturePad({
       return
     }
 
-    const { data } = supabase.storage.from('assinaturas').getPublicUrl(path)
     setUploading(false)
-    onSaved(`${data.publicUrl}?t=${Date.now()}`)
+    onSaved(path)
   }
 
   return (

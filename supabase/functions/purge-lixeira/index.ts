@@ -28,8 +28,15 @@ const PURGE_SECRET = "38eef7f5161b033130acca09aa17f4a67406810b80e0895cd08e533487
 
 const DIAS_RETENCAO_PADRAO = 7;
 
+// As colunas hoje guardam só o path no Storage (buckets privados, o front
+// gera signed URL sob demanda). Esta função também aceita o formato antigo
+// de URL pública completa, pra não quebrar linhas que ainda não passaram
+// pela migração de padronização.
 function extrairCaminhoDoStorage(url: string | null | undefined, bucket: string): string | null {
   if (!url) return null;
+  if (!/^https?:\/\//i.test(url)) {
+    return url;
+  }
   const semQuery = url.split("?")[0];
   const marcador = `/object/public/${bucket}/`;
   const idx = semQuery.indexOf(marcador);

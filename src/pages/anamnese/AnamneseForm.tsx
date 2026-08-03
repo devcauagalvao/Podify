@@ -63,7 +63,7 @@ export default function AnamneseForm() {
   // e fazer autosave mesmo antes do primeiro "Salvar Ficha".
   const [anamneseId] = useState(() => id ?? crypto.randomUUID())
   const isEditingInitially = useRef(Boolean(id))
-  const savedFotoUrlsRef = useRef<Set<string>>(new Set())
+  const savedFotoPathsRef = useRef<Set<string>>(new Set())
 
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [clienteId, setClienteId] = useState(params.get('cliente') ?? '')
@@ -89,9 +89,14 @@ export default function AnamneseForm() {
   const [orientacao, setOrientacaoState] = useState('')
   const [dataRetorno, setDataRetornoState] = useState('')
   const [autorizacaoImagem, setAutorizacaoImagemState] = useState(false)
-  const [assinaturaCliente, setAssinaturaCliente] = useState<string | null>(null)
-  const [assinaturaProfissional, setAssinaturaProfissional] = useState<string | null>(null)
-  const [fotos, setFotos] = useState<string[]>([])
+  // Colunas do banco guardam só o path no Storage (buckets privados); as
+  // signed URLs abaixo são geradas sob demanda e nunca persistidas.
+  const [assinaturaClientePath, setAssinaturaClientePath] = useState<string | null>(null)
+  const [assinaturaClienteSignedUrl, setAssinaturaClienteSignedUrl] = useState<string | null>(null)
+  const [assinaturaProfissionalPath, setAssinaturaProfissionalPath] = useState<string | null>(null)
+  const [assinaturaProfissionalSignedUrl, setAssinaturaProfissionalSignedUrl] = useState<string | null>(null)
+  const [fotoPaths, setFotoPaths] = useState<string[]>([])
+  const [fotoSignedUrls, setFotoSignedUrls] = useState<Record<string, string>>({})
 
   function setClienteIdDirty(v: string) {
     markDirty()
@@ -169,8 +174,8 @@ export default function AnamneseForm() {
         setOrientacaoState(f.orientacao ?? '')
         setDataRetornoState(f.data_retorno ?? '')
         setAutorizacaoImagemState(f.autorizacao_uso_imagem)
-        setAssinaturaCliente(f.assinatura_paciente_url)
-        setAssinaturaProfissional(f.assinatura_profissional_url)
+        setAssinaturaClientePath(f.assinatura_paciente_url)
+        setAssinaturaProfissionalPath(f.assinatura_profissional_url)
         setCarregandoFicha(false)
       })
 
@@ -183,12 +188,71 @@ export default function AnamneseForm() {
           toastError(`Não foi possível carregar as fotos da ficha: ${error.message}`)
           return
         }
-        const urls = (rows ?? []).map((r) => r.url)
-        urls.forEach((u) => savedFotoUrlsRef.current.add(u))
-        setFotos(urls)
+        const paths = (rows ?? []).map((r) => r.url)
+        paths.forEach((p) => savedFotoPathsRef.current.add(p))
+        setFotoPaths(paths)
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [anamneseId])
+
+  // Gera as signed URLs sob demanda pra exibição — nunca persistidas, e
+  // regeneradas sempre que aparece um path novo (foto recém-enviada ou
+  // ficha carregada). Expiram em 1h.
+  useEffect(() => {
+    const faltantes = fotoPaths.filter((p) => !fotoSignedUrls[p])
+    if (faltantes.length === 0) return
+    supabase.storage
+      .from('anamnese-fotos')
+      .createSignedUrls(faltantes, 3600)
+      .then(({ data, error }) => {
+        if (error) {
+          toastError(`Não foi possível gerar os links das fotos: ${error.message}`)
+          return
+        }
+        setFotoSignedUrls((prev) => {
+          const next = { ...prev }
+          for (const item of data ?? []) {
+            if (item.signedUrl && item.path) next[item.path] = item.signedUrl
+          }
+          return next
+        })
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fotoPaths])
+
+  useEffect(() => {
+    if (!assinaturaClientePath) {
+      setAssinaturaClienteSignedUrl(null)
+      return
+    }
+    supabase.storage
+      .from('assinaturas')
+      .createSignedUrl(assinaturaClientePath, 3600)
+      .then(({ data, error }) => {
+        if (error) {
+          toastError(`Não foi possível gerar o link da assinatura do cliente: ${error.message}`)
+          return
+        }
+        setAssinaturaClienteSignedUrl(data.signedUrl)
+      })
+  }, [assinaturaClientePath])
+
+  useEffect(() => {
+    if (!assinaturaProfissionalPath) {
+      setAssinaturaProfissionalSignedUrl(null)
+      return
+    }
+    supabase.storage
+      .from('assinaturas')
+      .createSignedUrl(assinaturaProfissionalPath, 3600)
+      .then(({ data, error }) => {
+        if (error) {
+          toastError(`Não foi possível gerar o link da assinatura do profissional: ${error.message}`)
+          return
+        }
+        setAssinaturaProfissionalSignedUrl(data.signedUrl)
+      })
+  }, [assinaturaProfissionalPath])
 
   // IMC automático
   useEffect(() => {
@@ -219,9 +283,8 @@ export default function AnamneseForm() {
       toastError(`Falha ao enviar foto: ${error.message}`)
       return
     }
-    const { data } = supabase.storage.from('anamnese-fotos').getPublicUrl(path)
     markDirty()
-    setFotos((prev) => [...prev, data.publicUrl])
+    setFotoPaths((prev) => [...prev, path])
   }
 
   async function salvarFicha(opts: { statusFinal: 'em_andamento' | 'finalizada'; silent: boolean }) {
@@ -250,8 +313,8 @@ export default function AnamneseForm() {
       orientacao: orientacao || null,
       data_retorno: dataRetorno || null,
       autorizacao_uso_imagem: autorizacaoImagem,
-      assinatura_paciente_url: assinaturaCliente,
-      assinatura_profissional_url: assinaturaProfissional,
+      assinatura_paciente_url: assinaturaClientePath,
+      assinatura_profissional_url: assinaturaProfissionalPath,
     }
 
     const { error } = await supabase.from('anamneses').upsert(payload)
@@ -266,15 +329,15 @@ export default function AnamneseForm() {
       return false
     }
 
-    const novasFotos = fotos.filter((url) => !savedFotoUrlsRef.current.has(url))
+    const novasFotos = fotoPaths.filter((path) => !savedFotoPathsRef.current.has(path))
     if (novasFotos.length > 0) {
       const { error: fotosError } = await supabase.from('anamnese_fotos').insert(
-        novasFotos.map((url) => ({ owner_id: user!.id, anamnese_id: anamneseId, url })),
+        novasFotos.map((path) => ({ owner_id: user!.id, anamnese_id: anamneseId, url: path })),
       )
       if (fotosError) {
         toastError(`Ficha salva, mas houve erro ao registrar as fotos: ${fotosError.message}`)
       } else {
-        novasFotos.forEach((url) => savedFotoUrlsRef.current.add(url))
+        novasFotos.forEach((path) => savedFotoPathsRef.current.add(path))
       }
     }
 
@@ -349,9 +412,11 @@ export default function AnamneseForm() {
         orientacao,
         dataRetorno,
         autorizacaoImagem,
-        assinaturaCliente,
-        assinaturaProfissional,
-        fotos,
+        // react-pdf precisa de uma URL de verdade pra buscar a imagem, então
+        // usa as signed URLs já geradas pra tela (não os paths salvos no banco).
+        assinaturaCliente: assinaturaClienteSignedUrl,
+        assinaturaProfissional: assinaturaProfissionalSignedUrl,
+        fotos: fotoPaths.map((p) => fotoSignedUrls[p]).filter((url): url is string => Boolean(url)),
       }
       const [{ pdf }, { AnamnesePdfDocument }] = await Promise.all([
         import('@react-pdf/renderer'),
@@ -710,15 +775,19 @@ export default function AnamneseForm() {
           <p className="text-xs font-bold tracking-wide text-white">FOTOS DO ATENDIMENTO</p>
         </div>
         <div className="p-5">
-          {fotos.length === 0 ? (
+          {fotoPaths.length === 0 ? (
             <div className="mb-3 rounded-xl border border-dashed border-slate-300 py-8 text-center text-sm text-slate-400">
               Nenhuma foto adicionada
             </div>
           ) : (
             <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
-              {fotos.map((url) => (
-                <img key={url} src={url} className="aspect-square rounded-lg object-cover" />
-              ))}
+              {fotoPaths.map((path) =>
+                fotoSignedUrls[path] ? (
+                  <img key={path} src={fotoSignedUrls[path]} className="aspect-square rounded-lg object-cover" />
+                ) : (
+                  <Skeleton key={path} className="aspect-square rounded-lg" />
+                ),
+              )}
             </div>
           )}
           <div className="flex gap-2">
@@ -767,32 +836,40 @@ export default function AnamneseForm() {
         <div className="grid grid-cols-1 gap-6 p-5 sm:grid-cols-2">
           <div>
             <p className="label-field">Assinatura do Cliente</p>
-            {assinaturaCliente ? (
-              <img src={assinaturaCliente} className="h-[120px] w-full rounded-xl border border-slate-200 object-contain" />
+            {assinaturaClientePath ? (
+              assinaturaClienteSignedUrl ? (
+                <img src={assinaturaClienteSignedUrl} className="h-[120px] w-full rounded-xl border border-slate-200 object-contain" />
+              ) : (
+                <Skeleton className="h-[120px] w-full rounded-xl" />
+              )
             ) : (
               <SignaturePad
                 ownerId={user!.id}
                 anamneseId={anamneseId}
                 tipo="cliente"
-                onSaved={(url) => {
+                onSaved={(path) => {
                   markDirty()
-                  setAssinaturaCliente(url)
+                  setAssinaturaClientePath(path)
                 }}
               />
             )}
           </div>
           <div>
             <p className="label-field">Assinatura do Profissional</p>
-            {assinaturaProfissional ? (
-              <img src={assinaturaProfissional} className="h-[120px] w-full rounded-xl border border-slate-200 object-contain" />
+            {assinaturaProfissionalPath ? (
+              assinaturaProfissionalSignedUrl ? (
+                <img src={assinaturaProfissionalSignedUrl} className="h-[120px] w-full rounded-xl border border-slate-200 object-contain" />
+              ) : (
+                <Skeleton className="h-[120px] w-full rounded-xl" />
+              )
             ) : (
               <SignaturePad
                 ownerId={user!.id}
                 anamneseId={anamneseId}
                 tipo="profissional"
-                onSaved={(url) => {
+                onSaved={(path) => {
                   markDirty()
-                  setAssinaturaProfissional(url)
+                  setAssinaturaProfissionalPath(path)
                 }}
               />
             )}
