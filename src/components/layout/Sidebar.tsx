@@ -4,7 +4,7 @@ import {
   Users,
   ClipboardList,
   CalendarDays,
-  Stethoscope,
+  Bot,
   DollarSign,
   Package,
   Truck,
@@ -15,13 +15,14 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { useAuthStore } from '@/store/authStore'
+import { SUPPORT_WHATSAPP_URL, SUPPORT_EMAIL } from '@/lib/contact'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
   { to: '/clientes', label: 'Clientes', icon: Users },
   { to: '/anamnese', label: 'Anamnese', icon: ClipboardList },
   { to: '/agenda', label: 'Agenda', icon: CalendarDays },
-  { to: '/lia', label: 'LIA Podologa', icon: Stethoscope },
+  { to: '/lia', label: 'LIA Podóloga', icon: Bot },
   { to: '/financeiro', label: 'Financeiro', icon: DollarSign },
   { to: '/estoque', label: 'Estoque', icon: Package },
   { to: '/fornecedores', label: 'Fornecedores', icon: Truck },
@@ -50,7 +51,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             onClick={onNavigate}
             className={({ isActive }) =>
               clsx(
-                'flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition',
+                'flex min-h-[44px] items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition',
                 isActive
                   ? 'bg-brand-400 text-white shadow-sm'
                   : 'text-slate-600 hover:bg-brand-50 hover:text-brand-700'
@@ -69,16 +70,16 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             SUPORTE
           </p>
           <a
-            href="https://wa.me/"
+            href={SUPPORT_WHATSAPP_URL}
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-3 rounded-xl px-3.5 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            className="flex min-h-[44px] items-center gap-3 rounded-xl px-3.5 py-2 text-sm text-slate-600 hover:bg-slate-50"
           >
             <MessageCircle size={18} /> WhatsApp
           </a>
           <a
-            href="mailto:suporte@podify.com.br"
-            className="flex items-center gap-3 rounded-xl px-3.5 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="flex min-h-[44px] items-center gap-3 rounded-xl px-3.5 py-2 text-sm text-slate-600 hover:bg-slate-50"
           >
             <Mail size={18} /> E-mail
           </a>
@@ -86,7 +87,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
         <button
           onClick={signOut}
-          className="flex w-full items-center gap-3 rounded-xl px-3.5 py-2 text-sm font-medium text-rose-500 hover:bg-rose-50"
+          className="flex min-h-[44px] w-full items-center gap-3 rounded-xl px-3.5 py-2 text-sm font-medium text-rose-500 hover:bg-rose-50"
         >
           <LogOut size={18} /> Sair
         </button>
@@ -97,15 +98,12 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
 
 function FootLogo() {
   return (
-    <svg width="26" height="26" viewBox="0 0 40 40" fill="none">
-      <circle cx="20" cy="20" r="20" fill="white" />
-      <path
-        d="M24 8c-3 0-5 2.5-5 6s2 6.5 2 10c0 4 2.5 7 6 7 3 0 5.5-2.5 5.5-6 0-3-1.5-5-1.5-8.5C31 12 28 8 24 8Z"
-        fill="#2f9d84"
-      />
-      <circle cx="18" cy="10" r="2" fill="#2f9d84" />
-      <circle cx="14" cy="12.5" r="2" fill="#2f9d84" />
-      <circle cx="11" cy="16.5" r="2" fill="#2f9d84" />
-    </svg>
+    <img
+      src="/podify-logo.jpg"
+      alt=""
+      width={26}
+      height={26}
+      className="h-[26px] w-[26px] shrink-0 rounded-full object-cover"
+    />
   )
 }

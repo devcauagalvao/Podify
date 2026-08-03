@@ -58,11 +58,11 @@ input[type='time']::-webkit-calendar-picker-indicator {
     @apply rounded-2xl bg-white shadow-sm border border-slate-100;
   }
   .btn-primary {
-    @apply rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-semibold text-white
+    @apply min-h-[44px] rounded-xl bg-ink-900 px-5 py-2.5 text-sm font-semibold text-white
       hover:bg-ink-800 transition disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-brand {
-    @apply rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white
+    @apply min-h-[44px] rounded-xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white
       hover:bg-brand-600 transition disabled:opacity-50 disabled:cursor-not-allowed;
   }
 }

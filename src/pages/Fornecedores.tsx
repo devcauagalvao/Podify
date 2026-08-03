@@ -55,7 +55,7 @@ export default function Fornecedores() {
       </div>
 
       {loading ? (
-        <SkeletonList rows={5} />
+        <SkeletonList rows={5} avatar={false} trailing={false} />
       ) : filtrados.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Truck size={40} className="mb-3 text-slate-300" />

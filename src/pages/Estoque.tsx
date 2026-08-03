@@ -56,7 +56,7 @@ export default function Estoque() {
       </div>
 
       {loading ? (
-        <SkeletonList rows={5} />
+        <SkeletonList rows={5} avatar={false} trailing="text" />
       ) : filtrados.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <Package size={40} className="mb-3 text-slate-300" />
@@ -169,7 +169,7 @@ function NovoProdutoModal({
             placeholder="Ex: Materiais, Equipamentos"
           />
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <div>
             <label className="label-field">Qtd *</label>
             <input

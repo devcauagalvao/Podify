@@ -52,7 +52,7 @@ export default function EsqueciSenha() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder="email@exemplo.com"
                 className="input-field pl-11"
               />
             </div>

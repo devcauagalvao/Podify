@@ -6,7 +6,7 @@ import { toastError, toastSuccess } from '@/store/toastStore'
 import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
-import { Skeleton } from '@/components/Skeleton'
+import { Skeleton, SkeletonCalendar } from '@/components/Skeleton'
 import type { Cliente, Consulta } from '@/types/database'
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -23,6 +23,10 @@ export default function Agenda() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  // Só o primeiro carregamento mostra o skeleton do calendário inteiro —
+  // trocar de mês depois não deve "piscar" a grade toda de novo, só a
+  // lista de consultas do dia (controlada por `loading`).
+  const [initialLoading, setInitialLoading] = useState(true)
 
   async function carregar() {
     setLoading(true)
@@ -35,13 +39,14 @@ export default function Agenda() {
         .gte('data', toISODate(inicio))
         .lte('data', toISODate(fim))
         .order('horario'),
-      supabase.from('clientes').select('*').order('nome'),
+      supabase.from('clientes').select('*').is('deleted_at', null).order('nome'),
     ])
     if (consultasRes.error) toastError(`Não foi possível carregar as consultas: ${consultasRes.error.message}`)
     if (clientesRes.error) toastError(`Não foi possível carregar os clientes: ${clientesRes.error.message}`)
     setConsultas(consultasRes.data ?? [])
     setClientes(clientesRes.data ?? [])
     setLoading(false)
+    setInitialLoading(false)
   }
 
   useEffect(() => {
@@ -84,20 +89,23 @@ export default function Agenda() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
+        {initialLoading ? (
+          <SkeletonCalendar />
+        ) : (
         <div className="card p-5">
           <div className="mb-4 flex items-center justify-between">
             <button
               onClick={() => setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth() - 1, 1))}
-              className="rounded-lg p-2 hover:bg-slate-100"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-slate-100"
             >
               <ChevronLeft size={18} />
             </button>
-            <p className="font-bold text-ink-900 capitalize">
+            <p className="text-center font-bold text-ink-900 capitalize">
               {new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' }).format(mesAtual)}
             </p>
             <button
               onClick={() => setMesAtual(new Date(mesAtual.getFullYear(), mesAtual.getMonth() + 1, 1))}
-              className="rounded-lg p-2 hover:bg-slate-100"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-slate-100"
             >
               <ChevronRight size={18} />
             </button>
@@ -136,6 +144,7 @@ export default function Agenda() {
             })}
           </div>
         </div>
+        )}
 
         <div className="card p-5">
           <p className="mb-4 font-bold text-ink-900">

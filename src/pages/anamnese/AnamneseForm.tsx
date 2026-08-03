@@ -7,7 +7,8 @@ import { toastError, toastSuccess } from '@/store/toastStore'
 import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { SignaturePad } from '@/components/SignaturePad'
-import { Section, Field, TextInput, SelectInput, SimNao, CheckPill } from './fields'
+import { Skeleton, SkeletonSection } from '@/components/Skeleton'
+import { Section, Field, TextInput, SelectInput, SimNao, CheckPill, BirthDateInput } from './fields'
 import type { AnamnesePdfData } from './AnamnesePdfDocument'
 import type { Cliente } from '@/types/database'
 
@@ -71,6 +72,7 @@ export default function AnamneseForm() {
   const [autosaving, setAutosaving] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
   const [exporting, setExporting] = useState(false)
+  const [carregandoFicha, setCarregandoFicha] = useState(Boolean(id))
 
   const [dadosPessoais, setDP, setDPAll] = useJson({}, markDirty)
   const [dadosGerais, setDG, setDGAll] = useJson({}, markDirty)
@@ -124,6 +126,7 @@ export default function AnamneseForm() {
     supabase
       .from('clientes')
       .select('*')
+      .is('deleted_at', null)
       .order('nome')
       .then(({ data, error }) => {
         if (error) {
@@ -141,13 +144,18 @@ export default function AnamneseForm() {
       .from('anamneses')
       .select('*')
       .eq('id', anamneseId)
+      .is('deleted_at', null)
       .single()
       .then(({ data: f, error }) => {
         if (error) {
           toastError(`Não foi possível carregar a ficha: ${error.message}`)
+          setCarregandoFicha(false)
           return
         }
-        if (!f) return
+        if (!f) {
+          setCarregandoFicha(false)
+          return
+        }
         setClienteId(f.cliente_id)
         setData(f.data)
         setDPAll(f.dados_pessoais as Obj)
@@ -163,6 +171,7 @@ export default function AnamneseForm() {
         setAutorizacaoImagemState(f.autorizacao_uso_imagem)
         setAssinaturaPaciente(f.assinatura_paciente_url)
         setAssinaturaProfissional(f.assinatura_profissional_url)
+        setCarregandoFicha(false)
       })
 
     supabase
@@ -364,11 +373,39 @@ export default function AnamneseForm() {
     }
   }
 
+  if (carregandoFicha) {
+    return (
+      <div className="space-y-6 pb-10">
+        <div className="flex items-center gap-3">
+          <button onClick={voltar} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-slate-100">
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-xl font-extrabold text-ink-900">Ficha de Anamnese</h1>
+            <p className="text-sm text-slate-500">Carregando ficha...</p>
+          </div>
+        </div>
+        <SkeletonSection fields={2} />
+        <SkeletonSection fields={9} />
+        <SkeletonSection fields={10} />
+        <SkeletonSection fields={4} />
+        <div className="card space-y-3 p-5">
+          <Skeleton className="h-3 w-40" />
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6 pb-10">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={voltar} className="rounded-lg p-2 hover:bg-slate-100">
+          <button onClick={voltar} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg hover:bg-slate-100">
             <ArrowLeft size={20} />
           </button>
           <div>
@@ -414,7 +451,7 @@ export default function AnamneseForm() {
 
       <Section title="DADOS PESSOAIS">
         <Field label="Data de Nascimento">
-          <TextInput type="date" value={dadosPessoais.dataNascimento ?? ''} onChange={(v) => setDP('dataNascimento', v)} />
+          <BirthDateInput value={dadosPessoais.dataNascimento ?? ''} onChange={(v) => setDP('dataNascimento', v)} />
         </Field>
         <Field label="Idade">
           <TextInput value={dadosPessoais.idade ?? ''} onChange={(v) => setDP('idade', v)} placeholder="Anos" />
@@ -431,10 +468,10 @@ export default function AnamneseForm() {
         <Field label="Celular">
           <TextInput value={dadosPessoais.celular ?? ''} onChange={(v) => setDP('celular', v)} placeholder="(00) 00000-0000" />
         </Field>
-        <Field label="Tel. Emergência">
+        <Field label="Tel. de Emergência">
           <TextInput value={dadosPessoais.telEmergencia ?? ''} onChange={(v) => setDP('telEmergencia', v)} placeholder="(00) 00000-0000" />
         </Field>
-        <Field label="Contato Emergência">
+        <Field label="Contato de Emergência">
           <TextInput value={dadosPessoais.contatoEmergencia ?? ''} onChange={(v) => setDP('contatoEmergencia', v)} placeholder="Nome" />
         </Field>
         <Field label="Endereço" full>
@@ -464,7 +501,7 @@ export default function AnamneseForm() {
         <Field label="Costuma ir ao Podólogo?">
           <SimNao value={dadosGerais.costumaPodologo ?? ''} onChange={(v) => setDG('costumaPodologo', v)} />
         </Field>
-        <Field label="Frequência Podólogo">
+        <Field label="Frequência ao Podólogo">
           <TextInput value={dadosGerais.frequenciaPodologo ?? ''} onChange={(v) => setDG('frequenciaPodologo', v)} placeholder="Ex: mensalmente" />
         </Field>
         <Field label="Medicamentos em uso">
@@ -525,7 +562,7 @@ export default function AnamneseForm() {
 
       <Section title="DADOS CLÍNICOS">
         <Field label="Condições" full>
-          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
             {CONDICOES_CLINICAS.map((c) => (
               <CheckPill
                 key={c}
@@ -560,7 +597,7 @@ export default function AnamneseForm() {
         <Field label="Dieta Alimentar">
           <TextInput value={dadosClinicos.dietaAlimentar ?? ''} onChange={(v) => setDC('dietaAlimentar', v)} />
         </Field>
-        <Field label="Data Última Verificação Glicêmica">
+        <Field label="Data da Última Verificação Glicêmica">
           <TextInput type="date" value={dadosClinicos.dataUltimaVerificacao ?? ''} onChange={(v) => setDC('dataUltimaVerificacao', v)} />
         </Field>
       </Section>
@@ -621,7 +658,7 @@ export default function AnamneseForm() {
 
       <Section title="ALTERAÇÕES, LESÕES E AVALIAÇÃO DA PELE">
         <Field label="Condições" full>
-          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
             {CONDICOES_PELE.map((c) => (
               <CheckPill
                 key={c}
@@ -685,11 +722,11 @@ export default function AnamneseForm() {
             </div>
           )}
           <div className="flex gap-2">
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
               <Camera size={16} /> Câmera
               <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => e.target.files?.[0] && handleUploadFoto(e.target.files[0])} />
             </label>
-            <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
+            <label className="flex min-h-[44px] cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm hover:bg-slate-50">
               <Upload size={16} /> Galeria
               <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => Array.from(e.target.files ?? []).forEach(handleUploadFoto)} />
             </label>
@@ -783,7 +820,7 @@ export default function AnamneseForm() {
           <button
             onClick={exportarPdf}
             disabled={exporting}
-            className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
+            className="flex min-h-[44px] items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-medium hover:bg-slate-50 disabled:opacity-50"
           >
             <FileDown size={16} /> {exporting ? 'Gerando PDF...' : 'Exportar PDF'}
           </button>

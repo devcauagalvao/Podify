@@ -43,11 +43,19 @@ export function AuthCard({ children }: { children: React.ReactNode }) {
   )
 }
 
-export function AuthHeader({ title, subtitle }: { title: string; subtitle: string }) {
+export function AuthHeader({
+  title,
+  subtitle,
+  icon,
+}: {
+  title: string
+  subtitle: string
+  icon?: React.ReactNode
+}) {
   return (
     <div className="flex flex-col items-center">
       <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-slate-100">
-        <FootIcon />
+        {icon ?? <FootIcon />}
       </div>
       <h1 className="text-2xl font-extrabold text-ink-900">{title}</h1>
       <p className="mt-1.5 text-sm text-slate-500">{subtitle}</p>

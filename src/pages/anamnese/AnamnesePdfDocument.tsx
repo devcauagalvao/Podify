@@ -213,8 +213,8 @@ const LABELS_PESSOAIS: [string, string][] = [
   ['profissao', 'Profissão'],
   ['estadoCivil', 'Estado Civil'],
   ['celular', 'Celular'],
-  ['telEmergencia', 'Tel. Emergência'],
-  ['contatoEmergencia', 'Contato Emergência'],
+  ['telEmergencia', 'Tel. de Emergência'],
+  ['contatoEmergencia', 'Contato de Emergência'],
   ['endereco', 'Endereço'],
   ['cep', 'CEP'],
   ['peso', 'Peso (kg)'],
@@ -226,7 +226,7 @@ const LABELS_PESSOAIS: [string, string][] = [
 const LABELS_GERAIS: [string, string][] = [
   ['queixaPrincipal', 'Queixa Principal'],
   ['costumaPodologo', 'Costuma ir ao Podólogo?'],
-  ['frequenciaPodologo', 'Frequência Podólogo'],
+  ['frequenciaPodologo', 'Frequência ao Podólogo'],
   ['medicamentosUso', 'Medicamentos em uso'],
   ['posicaoTrabalho', 'Posição de Trabalho'],
   ['duracaoHoras', 'Duração (horas)'],
@@ -256,7 +256,7 @@ const LABELS_CLINICOS: [string, string][] = [
   ['tipoMedicamento', 'Tipo de medicamento'],
   ['dietaHidrica', 'Dieta Hídrica?'],
   ['dietaAlimentar', 'Dieta Alimentar'],
-  ['dataUltimaVerificacao', 'Data Última Verificação Glicêmica'],
+  ['dataUltimaVerificacao', 'Data da Última Verificação Glicêmica'],
 ]
 
 const LABELS_LESOES: [string, string][] = [

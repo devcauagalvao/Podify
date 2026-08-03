@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Users, CalendarCheck, DollarSign, AlertTriangle, Footprints, Heart, UserPlus, ClipboardPlus, CalendarPlus, Stethoscope } from 'lucide-react'
+import { Users, CalendarCheck, DollarSign, AlertTriangle, Footprints, Coffee, UserPlus, ClipboardPlus, CalendarPlus, Bot } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { toastError } from '@/store/toastStore'
+import { Skeleton, SkeletonStatCards } from '@/components/Skeleton'
 
 function greeting() {
   const h = new Date().getHours()
@@ -29,7 +30,7 @@ export default function Dashboard() {
       inicioMes.setDate(1)
 
       const [clientesRes, consultasRes, financeiroRes, estoqueRes] = await Promise.all([
-        supabase.from('clientes').select('id', { count: 'exact', head: true }),
+        supabase.from('clientes').select('id', { count: 'exact', head: true }).is('deleted_at', null),
         supabase.from('consultas').select('id', { count: 'exact', head: true }).eq('data', hoje),
         supabase
           .from('financeiro_registros')
@@ -81,37 +82,46 @@ export default function Dashboard() {
           {dataFormatada} · {new Intl.DateTimeFormat('pt-BR', { hour: '2-digit', minute: '2-digit' }).format(new Date())}
         </p>
 
-        <div className="mt-6 flex flex-wrap gap-3">
-          <div className="flex items-center gap-3 rounded-xl bg-white/15 px-4 py-3 backdrop-blur-sm">
-            <CalendarCheck size={18} />
-            <div className="text-sm">
+        {/* grid-cols-2 fixo (em vez de flex-wrap) garante que os dois cards
+            fiquem sempre lado a lado, mesmo em telas bem estreitas — o
+            conteúdo encolhe/trunca em vez de quebrar linha. */}
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-sm sm:gap-3 sm:px-4 sm:py-3">
+            <CalendarCheck size={16} className="shrink-0 sm:hidden" />
+            <CalendarCheck size={18} className="hidden shrink-0 sm:block" />
+            <div className="min-w-0 text-xs sm:text-sm">
               <p className="font-bold leading-none">{stats.consultasHoje}</p>
-              <p className="text-white/80">Hoje consultas</p>
+              <p className="truncate text-white/80">Consultas hoje</p>
             </div>
           </div>
-          <div className="flex items-center gap-3 rounded-xl bg-white/15 px-4 py-3 backdrop-blur-sm">
-            <Users size={18} />
-            <div className="text-sm">
+          <div className="flex items-center gap-2 rounded-xl bg-white/15 px-3 py-2.5 backdrop-blur-sm sm:gap-3 sm:px-4 sm:py-3">
+            <Users size={16} className="shrink-0 sm:hidden" />
+            <Users size={18} className="hidden shrink-0 sm:block" />
+            <div className="min-w-0 text-xs sm:text-sm">
               <p className="font-bold leading-none">{stats.clientes}</p>
-              <p className="text-white/80">Total clientes</p>
+              <p className="truncate text-white/80">Total clientes</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Cards de estatística */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={Users} label="Clientes" sub="cadastrados" value={stats.clientes} tone="brand" />
-        <StatCard icon={CalendarCheck} label="Consultas Hoje" sub="agendadas" value={stats.consultasHoje} tone="brand" />
-        <StatCard
-          icon={DollarSign}
-          label="Receita do Mês"
-          sub={new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())}
-          value={stats.receitaMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          tone="brand-dark"
-        />
-        <StatCard icon={AlertTriangle} label="Alerta de Estoque" sub="itens baixos" value={stats.alertaEstoque} tone="danger" />
-      </div>
+      {loading ? (
+        <SkeletonStatCards count={4} className="grid-cols-2 gap-4 lg:grid-cols-4" />
+      ) : (
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <StatCard icon={Users} label="Clientes" sub="cadastrados" value={stats.clientes} tone="brand" />
+          <StatCard icon={CalendarCheck} label="Consultas Hoje" sub="agendadas" value={stats.consultasHoje} tone="brand" />
+          <StatCard
+            icon={DollarSign}
+            label="Receita do Mês"
+            sub={new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())}
+            value={stats.receitaMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            tone="brand-dark"
+          />
+          <StatCard icon={AlertTriangle} label="Alerta de Estoque" sub="itens baixos" value={stats.alertaEstoque} tone="danger" />
+        </div>
+      )}
 
       {/* Clientes recentes / Consultas de hoje */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -124,7 +134,11 @@ export default function Dashboard() {
               Ver todos →
             </Link>
           </div>
-          <EmptyState icon={Footprints} text="Nenhum cliente cadastrado ainda" cta="Cadastrar primeiro cliente" to="/clientes" />
+          {loading ? (
+            <RecentListSkeleton />
+          ) : (
+            <EmptyState icon={Footprints} text="Nenhum cliente cadastrado ainda" cta="Cadastrar primeiro cliente" to="/clientes" />
+          )}
         </div>
 
         <div className="card p-6">
@@ -136,7 +150,11 @@ export default function Dashboard() {
               Ver agenda →
             </Link>
           </div>
-          <EmptyState icon={Heart} text="Dia livre hoje!" sub="Nenhuma consulta agendada." cta="Agendar consulta" to="/agenda" />
+          {loading ? (
+            <RecentListSkeleton />
+          ) : (
+            <EmptyState icon={Coffee} text="Dia livre hoje!" sub="Nenhuma consulta agendada." cta="Agendar consulta" to="/agenda" />
+          )}
         </div>
       </div>
 
@@ -147,11 +165,25 @@ export default function Dashboard() {
           <QuickAccess icon={UserPlus} title="Novo Cliente" sub="Cadastrar" to="/clientes" />
           <QuickAccess icon={ClipboardPlus} title="Nova Ficha" sub="Anamnese" to="/anamnese/nova" />
           <QuickAccess icon={CalendarPlus} title="Agendar" sub="Consulta" to="/agenda" />
-          <QuickAccess icon={Stethoscope} title="LIA Podologa" sub="Consultar IA" to="/lia" />
+          <QuickAccess icon={Bot} title="LIA Podóloga" sub="Consultar IA" to="/lia" />
         </div>
       </div>
+    </div>
+  )
+}
 
-      {loading && <p className="text-center text-xs text-slate-400">Carregando dados…</p>}
+function RecentListSkeleton() {
+  return (
+    <div className="space-y-4 py-1">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-3.5 w-32" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

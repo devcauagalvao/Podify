@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -71,6 +71,95 @@ export function SelectInput({
   )
 }
 
+const MESES = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
+function pad2(n: number) {
+  return String(n).padStart(2, '0')
+}
+
+/** Data de nascimento em 3 seletores separados (Dia / Mês por extenso / Ano)
+ * em vez do calendário nativo — mais fácil de qualquer pessoa entender e
+ * usar, sem depender de saber o formato certo de digitar a data. Continua
+ * salvando no mesmo formato "AAAA-MM-DD" de sempre. */
+export function BirthDateInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const [dia, setDia] = useState('')
+  const [mes, setMes] = useState('')
+  const [ano, setAno] = useState('')
+
+  useEffect(() => {
+    const [y, m, d] = (value ?? '').split('-')
+    setAno(y ?? '')
+    setMes(m ?? '')
+    setDia(d ?? '')
+  }, [value])
+
+  function aplicar(next: { dia?: string; mes?: string; ano?: string }) {
+    const m = next.mes ?? mes
+    const y = next.ano ?? ano
+    let d = next.dia ?? dia
+    if (d && m && y) {
+      const maxDias = new Date(Number(y), Number(m), 0).getDate()
+      if (Number(d) > maxDias) d = pad2(maxDias)
+    }
+    setDia(d)
+    setMes(m)
+    setAno(y)
+    if (d && m && y) onChange(`${y}-${m}-${d}`)
+  }
+
+  const anoAtual = new Date().getFullYear()
+  const anos = Array.from({ length: 121 }, (_, i) => anoAtual - i)
+  const diasNoMes = mes && ano ? new Date(Number(ano), Number(mes), 0).getDate() : 31
+  const dias = Array.from({ length: diasNoMes }, (_, i) => i + 1)
+
+  return (
+    <div className="grid grid-cols-[0.8fr_1.4fr_1fr] gap-2">
+      <select
+        value={dia}
+        onChange={(e) => aplicar({ dia: e.target.value })}
+        className="input-field px-2 text-center"
+        aria-label="Dia de nascimento"
+      >
+        <option value="">Dia</option>
+        {dias.map((d) => (
+          <option key={d} value={pad2(d)}>
+            {pad2(d)}
+          </option>
+        ))}
+      </select>
+      <select
+        value={mes}
+        onChange={(e) => aplicar({ mes: e.target.value })}
+        className="input-field px-1.5"
+        aria-label="Mês de nascimento"
+      >
+        <option value="">Mês</option>
+        {MESES.map((nome, i) => (
+          <option key={nome} value={pad2(i + 1)}>
+            {nome}
+          </option>
+        ))}
+      </select>
+      <select
+        value={ano}
+        onChange={(e) => aplicar({ ano: e.target.value })}
+        className="input-field px-2 text-center"
+        aria-label="Ano de nascimento"
+      >
+        <option value="">Ano</option>
+        {anos.map((a) => (
+          <option key={a} value={a}>
+            {a}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
 export function SimNao({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
     <div className="flex overflow-hidden rounded-xl border border-slate-200">
@@ -79,7 +168,7 @@ export function SimNao({ value, onChange }: { value: string; onChange: (v: strin
           key={opt}
           type="button"
           onClick={() => onChange(opt)}
-          className={`flex-1 py-2 text-sm font-medium transition ${
+          className={`min-h-[44px] flex-1 py-2 text-sm font-medium transition ${
             value === opt ? 'bg-brand-500 text-white' : 'bg-white text-slate-500 hover:bg-slate-50'
           }`}
         >
@@ -103,7 +192,7 @@ export function CheckPill({
     <button
       type="button"
       onClick={onToggle}
-      className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50"
+      className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50"
     >
       <span
         className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${

@@ -1,18 +1,24 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, ClipboardList } from 'lucide-react'
+import { Plus, Search, ClipboardList, UserPlus } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toastError } from '@/store/toastStore'
-import { SkeletonList } from '@/components/Skeleton'
+import { Skeleton, SkeletonList } from '@/components/Skeleton'
 import type { Anamnese, Cliente } from '@/types/database'
 
 type AnamneseComCliente = Anamnese & { clientes: Pick<Cliente, 'nome'> | null }
+type ClienteBasico = Pick<Cliente, 'id' | 'nome'>
+
+const DEBOUNCE_MS = 300
 
 export default function AnamneseList() {
   const [fichas, setFichas] = useState<AnamneseComCliente[]>([])
   const [busca, setBusca] = useState('')
+  const [buscaDebounced, setBuscaDebounced] = useState('')
   const [totalPacientes, setTotalPacientes] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [clientesSemFicha, setClientesSemFicha] = useState<ClienteBasico[]>([])
+  const [buscandoClientes, setBuscandoClientes] = useState(false)
 
   useEffect(() => {
     async function carregar() {
@@ -20,6 +26,7 @@ export default function AnamneseList() {
       const { data, error } = await supabase
         .from('anamneses')
         .select('*, clientes(nome)')
+        .is('deleted_at', null)
         .order('data', { ascending: false })
       if (error) toastError(`Não foi possível carregar as fichas de anamnese: ${error.message}`)
       setFichas((data as AnamneseComCliente[]) ?? [])
@@ -30,9 +37,49 @@ export default function AnamneseList() {
     carregar()
   }, [])
 
-  const filtradas = fichas.filter((f) =>
-    f.clientes?.nome?.toLowerCase().includes(busca.toLowerCase())
-  )
+  // Debounce: só dispara a busca no banco 300ms depois de parar de digitar.
+  useEffect(() => {
+    const t = setTimeout(() => setBuscaDebounced(busca.trim()), DEBOUNCE_MS)
+    return () => clearTimeout(t)
+  }, [busca])
+
+  // Busca direto na tabela de clientes (ilike no nome) em paralelo — não só
+  // nas fichas já existentes — pra achar pacientes que baterem com o nome
+  // mas ainda não têm nenhuma ficha de anamnese.
+  useEffect(() => {
+    if (!buscaDebounced) {
+      setClientesSemFicha([])
+      return
+    }
+    let cancelado = false
+    async function buscarClientes() {
+      setBuscandoClientes(true)
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id, nome')
+        .is('deleted_at', null)
+        .ilike('nome', `%${buscaDebounced}%`)
+        .order('nome')
+      if (cancelado) return
+      if (error) {
+        toastError(`Não foi possível buscar pacientes: ${error.message}`)
+        setClientesSemFicha([])
+      } else {
+        const idsComFicha = new Set(fichas.map((f) => f.cliente_id))
+        setClientesSemFicha((data ?? []).filter((c) => !idsComFicha.has(c.id)))
+      }
+      setBuscandoClientes(false)
+    }
+    buscarClientes()
+    return () => {
+      cancelado = true
+    }
+  }, [buscaDebounced, fichas])
+
+  const temBusca = busca.trim().length > 0
+  const filtradas = temBusca
+    ? fichas.filter((f) => f.clientes?.nome?.toLowerCase().includes(busca.trim().toLowerCase()))
+    : fichas
 
   return (
     <div className="space-y-6">
@@ -59,34 +106,85 @@ export default function AnamneseList() {
       </div>
 
       {loading ? (
-        <SkeletonList rows={5} />
-      ) : filtradas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <ClipboardList size={40} className="mb-3 text-slate-300" />
-          <p className="mb-4 font-semibold text-slate-500">Nenhuma ficha encontrada</p>
-          <Link to="/anamnese/nova" className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50">
-            Criar primeira ficha
-          </Link>
-        </div>
+        <SkeletonList rows={5} avatar={false} trailing={false} />
       ) : (
-        <div className="card divide-y divide-slate-100">
-          {filtradas.map((f) => (
-            <Link
-              key={f.id}
-              to={`/anamnese/${f.id}`}
-              className="flex items-center justify-between px-5 py-4 hover:bg-slate-50"
-            >
-              <div>
-                <p className="font-semibold text-ink-900">{f.clientes?.nome ?? 'Paciente'}</p>
-                <p className="text-sm text-slate-400">
-                  {new Date(f.data).toLocaleDateString('pt-BR')} ·{' '}
-                  {f.status === 'finalizada' ? 'Finalizada' : 'Em andamento'}
-                </p>
+        <div className="space-y-6">
+          <div>
+            {temBusca && (
+              <p className="mb-3 text-xs font-bold tracking-wider text-slate-400">FICHAS ENCONTRADAS</p>
+            )}
+
+            {filtradas.length === 0 ? (
+              temBusca ? (
+                <p className="py-2 text-sm text-slate-400">Nenhuma ficha encontrada para "{busca.trim()}".</p>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <ClipboardList size={40} className="mb-3 text-slate-300" />
+                  <p className="mb-4 font-semibold text-slate-500">Nenhuma ficha encontrada</p>
+                  <Link
+                    to="/anamnese/nova"
+                    className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium hover:bg-slate-50"
+                  >
+                    Criar primeira ficha
+                  </Link>
+                </div>
+              )
+            ) : (
+              <div className="card divide-y divide-slate-100">
+                {filtradas.map((f) => (
+                  <div key={f.id} className="flex items-center gap-2 px-5 py-2 hover:bg-slate-50">
+                    <Link to={`/anamnese/${f.id}`} className="min-w-0 flex-1 py-2">
+                      <p className="truncate font-semibold text-ink-900">{f.clientes?.nome ?? 'Paciente'}</p>
+                      <p className="text-sm text-slate-400">
+                        {new Date(f.data).toLocaleDateString('pt-BR')} ·{' '}
+                        {f.status === 'finalizada' ? 'Finalizada' : 'Em andamento'}
+                      </p>
+                    </Link>
+                    <NovaFichaButton clienteId={f.cliente_id} />
+                  </div>
+                ))}
               </div>
-            </Link>
-          ))}
+            )}
+          </div>
+
+          {temBusca && (
+            <div>
+              <p className="mb-3 flex items-center gap-1.5 text-xs font-bold tracking-wider text-slate-400">
+                <UserPlus size={14} /> PACIENTES SEM FICHA AINDA
+              </p>
+              {buscandoClientes ? (
+                <div className="card divide-y divide-slate-100">
+                  <div className="flex items-center gap-3 px-5 py-4">
+                    <Skeleton className="h-4 w-32" />
+                  </div>
+                </div>
+              ) : clientesSemFicha.length === 0 ? (
+                <p className="text-sm text-slate-400">Nenhum paciente sem ficha encontrado para "{busca.trim()}".</p>
+              ) : (
+                <div className="card divide-y divide-slate-100">
+                  {clientesSemFicha.map((c) => (
+                    <div key={c.id} className="flex items-center gap-2 px-5 py-4">
+                      <p className="min-w-0 flex-1 truncate font-semibold text-ink-900">{c.nome}</p>
+                      <NovaFichaButton clienteId={c.id} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
+  )
+}
+
+function NovaFichaButton({ clienteId }: { clienteId: string }) {
+  return (
+    <Link
+      to={`/anamnese/nova?cliente=${clienteId}`}
+      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-brand-200 px-3 py-2 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+    >
+      <Plus size={14} /> Nova Ficha
+    </Link>
   )
 }

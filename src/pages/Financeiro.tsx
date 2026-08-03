@@ -6,7 +6,7 @@ import { toastError, toastSuccess } from '@/store/toastStore'
 import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
-import { Skeleton, SkeletonList, SkeletonStatCards } from '@/components/Skeleton'
+import { Skeleton, SkeletonStatCards } from '@/components/Skeleton'
 import type { FinanceiroRegistro } from '@/types/database'
 
 const PERIODOS = [30, 60, 90] as const
@@ -56,7 +56,7 @@ export default function Financeiro() {
               <button
                 key={p}
                 onClick={() => setPeriodo(p)}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
+                className={`flex min-h-[44px] items-center rounded-lg px-3 text-sm font-medium transition ${
                   periodo === p ? 'bg-brand-400 text-white' : 'text-slate-500 hover:bg-slate-50'
                 }`}
               >

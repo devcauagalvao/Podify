@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { Camera, Upload, Send } from 'lucide-react'
+import { Camera, Upload, Send, Bot } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { toastError } from '@/store/toastStore'
+import { TypingDots } from '@/components/Skeleton'
+import { buscarRespostaFaq } from './liaFaqBase'
 
 interface Mensagem {
   role: 'user' | 'assistant'
@@ -68,19 +70,30 @@ export default function LiaPodologa() {
     })
     if (msgError) toastError(`Sua mensagem não foi salva no histórico: ${msgError.message}`)
 
-    // Chama a Edge Function "lia-chat" (ver supabase/functions/lia-chat)
-    // Ela encaminha pra Claude API com contexto de especialista em podologia.
-    const { data, error } = await supabase.functions.invoke('lia-chat', {
-      body: {
-        mensagem: texto,
-        imagem_url: imagemUrl,
-        historico: mensagens.slice(-10),
-      },
-    })
+    // Por enquanto a LIA responde primeiro com uma base fixa de perguntas e
+    // respostas sobre os temas mais comuns de podologia (ver liaFaqBase.ts).
+    // Só quando a pergunta não bate com nada da base é que tenta a Edge
+    // Function "lia-chat" (ver supabase/functions/lia-chat), que encaminha
+    // pra Claude API — assim que ela for publicada, tudo que hoje cai no
+    // fallback já passa a responder com IA de verdade automaticamente.
+    const respostaFaq = imagemUrl ? null : buscarRespostaFaq(texto)
+    let resposta: string
 
-    const resposta = error
-      ? 'Não consegui responder agora. Verifique se a Edge Function "lia-chat" está publicada e configurada com a chave da Claude API.'
-      : data?.resposta ?? '...'
+    if (respostaFaq) {
+      await new Promise((r) => setTimeout(r, 500)) // pausa curta pra "digitando" parecer natural
+      resposta = respostaFaq
+    } else {
+      const { data, error } = await supabase.functions.invoke('lia-chat', {
+        body: {
+          mensagem: texto,
+          imagem_url: imagemUrl,
+          historico: mensagens.slice(-10),
+        },
+      })
+      resposta = error
+        ? 'Ainda não tenho uma resposta pronta pra essa pergunta. Por enquanto respondo os temas mais comuns de podologia — tente algo como "O que é onicocriptose?", "Como cuidar do pé diabético?" ou "Como tratar fasciíte plantar?".'
+        : data?.resposta ?? '...'
+    }
 
     setMensagens((prev) => [...prev, { role: 'assistant', conteudo: resposta }])
     const { error: respError } = await supabase.from('lia_mensagens').insert({
@@ -106,10 +119,16 @@ export default function LiaPodologa() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-8rem)] flex-col lg:h-[calc(100vh-4rem)]">
-      <div className="mb-4 flex items-center gap-4 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-300 p-5 text-white">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-xl font-bold">
-          LIA
+    // h-full em vez de calc(100vh...): esse cálculo fixo com "vh" quebrava
+    // no mobile quando a barra de endereço do navegador aparece/some ao
+    // rolar (vh não acompanha, dvh sim). h-full acompanha automaticamente
+    // a altura real disponível dentro do <main>, em qualquer breakpoint.
+    // min-h-0 é o que permite o flex-1 abaixo encolher e rolar por dentro
+    // em vez de estourar o container e empurrar o campo de input pra fora.
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-4 flex shrink-0 items-center gap-4 rounded-2xl bg-gradient-to-br from-brand-600 to-brand-300 p-5 text-white">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white/20">
+          <Bot size={24} />
         </div>
         <div>
           <h1 className="font-bold">LIA Podóloga</h1>
@@ -117,11 +136,11 @@ export default function LiaPodologa() {
         </div>
       </div>
 
-      <div ref={scrollRef} className="card flex-1 space-y-4 overflow-y-auto p-5">
+      <div ref={scrollRef} className="card min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
         {mensagens.length === 0 && (
           <div className="flex flex-col items-center py-10 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-2xl font-bold text-brand-600">
-              LIA
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+              <Bot size={32} />
             </div>
             <h2 className="font-bold text-ink-900">Olá, sou a LIA</h2>
             <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
@@ -158,10 +177,14 @@ export default function LiaPodologa() {
           </div>
         ))}
 
-        {enviando && <p className="text-sm text-slate-400">LIA está digitando...</p>}
+        {enviando && (
+          <div className="flex justify-start">
+            <TypingDots />
+          </div>
+        )}
       </div>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex shrink-0 items-center gap-2">
         <input
           ref={fileRef}
           type="file"

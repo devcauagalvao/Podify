@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
@@ -58,6 +60,8 @@ export type Database = {
           dados_pessoais: Json
           data: string
           data_retorno: string | null
+          deleted_at: string | null
+          deleted_via_cliente: boolean
           formato_unhas: Json
           id: string
           observacoes_clinicas: string | null
@@ -80,6 +84,8 @@ export type Database = {
           dados_pessoais?: Json
           data?: string
           data_retorno?: string | null
+          deleted_at?: string | null
+          deleted_via_cliente?: boolean
           formato_unhas?: Json
           id?: string
           observacoes_clinicas?: string | null
@@ -102,6 +108,8 @@ export type Database = {
           dados_pessoais?: Json
           data?: string
           data_retorno?: string | null
+          deleted_at?: string | null
+          deleted_via_cliente?: boolean
           formato_unhas?: Json
           id?: string
           observacoes_clinicas?: string | null
@@ -126,6 +134,7 @@ export type Database = {
           cep: string | null
           created_at: string
           data_nascimento: string | null
+          deleted_at: string | null
           email: string | null
           endereco: string | null
           genero: string | null
@@ -140,6 +149,7 @@ export type Database = {
           cep?: string | null
           created_at?: string
           data_nascimento?: string | null
+          deleted_at?: string | null
           email?: string | null
           endereco?: string | null
           genero?: string | null
@@ -154,6 +164,7 @@ export type Database = {
           cep?: string | null
           created_at?: string
           data_nascimento?: string | null
+          deleted_at?: string | null
           email?: string | null
           endereco?: string | null
           genero?: string | null
@@ -392,6 +403,7 @@ export type Database = {
           assinatura_expira_em: string | null
           assinatura_status: string
           avatar_url: string | null
+          cpf_cnpj: string | null
           created_at: string
           id: string
           nome_clinica: string | null
@@ -406,6 +418,7 @@ export type Database = {
           assinatura_expira_em?: string | null
           assinatura_status?: string
           avatar_url?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           id: string
           nome_clinica?: string | null
@@ -420,6 +433,7 @@ export type Database = {
           assinatura_expira_em?: string | null
           assinatura_status?: string
           avatar_url?: string | null
+          cpf_cnpj?: string | null
           created_at?: string
           id?: string
           nome_clinica?: string | null
@@ -432,7 +446,17 @@ export type Database = {
       }
     }
     Views: { [_ in never]: never }
-    Functions: { [_ in never]: never }
+    Functions: {
+      purge_deleted_clientes: {
+        Args: { p_dias_retencao?: number }
+        Returns: undefined
+      }
+      restore_cliente: { Args: { p_cliente_id: string }; Returns: undefined }
+      soft_delete_cliente: {
+        Args: { p_cliente_id: string }
+        Returns: undefined
+      }
+    }
     Enums: { [_ in never]: never }
     CompositeTypes: { [_ in never]: never }
   }

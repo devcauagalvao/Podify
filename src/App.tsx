@@ -10,6 +10,7 @@ import EsqueciSenha from '@/pages/EsqueciSenha'
 import RedefinirSenha from '@/pages/RedefinirSenha'
 import Dashboard from '@/pages/Dashboard'
 import Clientes from '@/pages/Clientes'
+import ClientePerfil from '@/pages/ClientePerfil'
 import AnamneseList from '@/pages/anamnese/AnamneseList'
 import AnamneseForm from '@/pages/anamnese/AnamneseForm'
 import Agenda from '@/pages/Agenda'
@@ -38,6 +39,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/clientes" element={<Clientes />} />
+          <Route path="/clientes/:id" element={<ClientePerfil />} />
           <Route path="/anamnese" element={<AnamneseList />} />
           <Route path="/anamnese/nova" element={<AnamneseForm />} />
           <Route path="/anamnese/:id" element={<AnamneseForm />} />
