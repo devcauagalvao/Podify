@@ -215,6 +215,7 @@ const LABELS_PESSOAIS: [string, string][] = [
   ['celular', 'Celular'],
   ['telEmergencia', 'Tel. de Emergência'],
   ['contatoEmergencia', 'Contato de Emergência'],
+  ['contatoFamiliar', 'Contato Familiar'],
   ['endereco', 'Endereço'],
   ['cep', 'CEP'],
   ['peso', 'Peso (kg)'],
@@ -249,6 +250,7 @@ const LABELS_GERAIS: [string, string][] = [
 
 const LABELS_CLINICOS: [string, string][] = [
   ['sinalGodet', 'Sinal de Godet'],
+  ['pressaoArterial', 'Pressão Arterial'],
   ['diabetes', 'Diabetes?'],
   ['preDiabetes', 'Pré-Diabetes?'],
   ['taxaGlicemica', 'Taxa Glicêmica'],

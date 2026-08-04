@@ -13,6 +13,8 @@ import {
   CalendarDays,
   ClipboardList,
   AlertTriangle,
+  Mic,
+  Star,
 } from 'lucide-react'
 import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -162,7 +164,7 @@ export default function Assinatura() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/20">
-                  <span className="text-xl">🦶</span>
+                  <Mic size={22} />
                 </div>
                 <div>
                   <p className="font-bold">PODIFY Pro</p>
@@ -206,7 +208,7 @@ export default function Assinatura() {
           </div>
 
           <div className="card p-6">
-            <p className="mb-4 flex items-center gap-2 font-bold text-ink-900">⭐ O que está incluído</p>
+            <p className="mb-4 flex items-center gap-2 font-bold text-ink-900"><Star size={16} className="text-brand-500" /> O que está incluído</p>
             <div className="space-y-3">
               {RECURSOS.map((r) => (
                 <div key={r} className="flex items-center gap-3 text-sm text-slate-600">
@@ -264,7 +266,7 @@ export default function Assinatura() {
 
           {/* Recursos incluídos */}
           <div className="card p-6 sm:p-8">
-            <p className="mb-5 flex items-center gap-2 font-bold text-ink-900">⭐ O que está incluído</p>
+            <p className="mb-5 flex items-center gap-2 font-bold text-ink-900"><Star size={16} className="text-brand-500" /> O que está incluído</p>
             <div className="space-y-4">
               {RECURSOS.map((r) => (
                 <div key={r} className="flex items-center gap-3 text-sm text-slate-700 sm:text-base">

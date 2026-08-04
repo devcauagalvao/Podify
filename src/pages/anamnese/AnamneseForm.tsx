@@ -539,6 +539,9 @@ export default function AnamneseForm() {
         <Field label="Contato de Emergência">
           <TextInput value={dadosPessoais.contatoEmergencia ?? ''} onChange={(v) => setDP('contatoEmergencia', v)} placeholder="Nome" />
         </Field>
+        <Field label="Contato Familiar">
+          <TextInput value={dadosPessoais.contatoFamiliar ?? ''} onChange={(v) => setDP('contatoFamiliar', v)} placeholder="Nome e telefone" />
+        </Field>
         <Field label="Endereço" full>
           <TextInput value={dadosPessoais.endereco ?? ''} onChange={(v) => setDP('endereco', v)} placeholder="Rua, número, Bairro, Cidade - UF" />
         </Field>
@@ -640,6 +643,9 @@ export default function AnamneseForm() {
         </Field>
         <Field label="Sinal de Godet">
           <SelectInput value={dadosClinicos.sinalGodet ?? ''} onChange={(v) => setDC('sinalGodet', v)} options={['Ausente', 'Presente +', 'Presente ++', 'Presente +++']} />
+        </Field>
+        <Field label="Pressão Arterial">
+          <TextInput value={dadosClinicos.pressaoArterial ?? ''} onChange={(v) => setDC('pressaoArterial', v)} placeholder="Ex: 120/80" />
         </Field>
         <Field label="Diabetes?">
           <SimNao value={dadosClinicos.diabetes ?? ''} onChange={(v) => setDC('diabetes', v)} />
