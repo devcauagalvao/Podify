@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Check, Gift, Lock, ShieldCheck, Sparkles } from 'lucide-react'
+import { Reveal } from '@/components/Reveal'
 
 const RECURSOS = [
   'Clientes ilimitados',
@@ -16,18 +17,25 @@ const RECURSOS = [
 
 export function Pricing() {
   return (
-    <section id="planos" className="bg-brand-50/60 px-6 py-20">
-      <div className="mx-auto max-w-3xl text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-brand-700 shadow-sm">
-          Preço simples e justo
-        </span>
-        <p className="mt-6 text-5xl font-extrabold text-ink-900">
-          R$ 29,90<span className="text-xl font-semibold text-slate-500">/mês</span>
-        </p>
-        <p className="mt-2 text-slate-600">Acesso completo. Sem surpresas.</p>
-        <p className="mt-1 font-semibold text-brand-700">Os primeiros 7 dias são totalmente gratuitos.</p>
+    <section id="planos" className="relative overflow-hidden bg-brand-50/60 px-6 py-20">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-0 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-brand-200/30 blur-3xl"
+      />
 
-        <div className="mt-10 overflow-hidden rounded-3xl bg-white text-left shadow-xl shadow-brand-900/5">
+      <div className="relative mx-auto max-w-3xl text-center">
+        <Reveal>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-brand-700 shadow-sm">
+            Preço simples e justo
+          </span>
+          <p className="mt-6 font-display text-5xl font-semibold text-ink-900">
+            R$ 29,90<span className="text-xl font-semibold text-slate-500">/mês</span>
+          </p>
+          <p className="mt-2 text-slate-600">Acesso completo. Sem surpresas.</p>
+          <p className="mt-1 font-semibold text-brand-700">Os primeiros 7 dias são totalmente gratuitos.</p>
+        </Reveal>
+
+        <Reveal delay={120} className="mt-10 overflow-hidden rounded-3xl bg-white text-left shadow-xl shadow-brand-900/5">
           <div className="flex items-center justify-between bg-gradient-to-br from-brand-700 to-brand-500 px-8 py-6 text-white">
             <div>
               <p className="text-xs font-medium text-white/75">Plano único</p>
@@ -65,7 +73,7 @@ export function Pricing() {
               </span>
             </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   )

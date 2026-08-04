@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Mail, MessageCircle, ShieldCheck } from 'lucide-react'
 import { FootIcon } from '@/components/BrandMark'
+import glvLogoUrl from '@/assets/logos/glv-tecnologia.png'
 import { SUPPORT_EMAIL, SUPPORT_PHONE_DISPLAY, SUPPORT_WHATSAPP_URL } from '@/lib/contact'
 import { SHOW_TESTIMONIALS } from './Testimonials'
 
@@ -11,7 +12,7 @@ export function Footer() {
         <div>
           <div className="flex items-center gap-2">
             <FootIcon />
-            <span className="text-lg font-extrabold">Podify</span>
+            <span className="font-display text-lg font-semibold">Podify</span>
           </div>
           <p className="mt-3 max-w-xs text-sm text-white/60">
             Plataforma de gestão completa para podólogos e clínicas de podologia. Mais tempo
@@ -57,6 +58,14 @@ export function Footer() {
               <Mail size={16} /> {SUPPORT_EMAIL}
             </a>
           </div>
+          <a
+            href="https://glvtecnologia.com.br"
+            target="_blank"
+            rel="noreferrer"
+            className="mt-6 inline-block w-fit opacity-90 transition hover:opacity-100"
+          >
+            <img src={glvLogoUrl} alt="by GLV Tecnologia" className="h-12 w-auto object-contain" />
+          </a>
         </div>
       </div>
 
