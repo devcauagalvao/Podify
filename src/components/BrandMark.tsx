@@ -1,15 +1,7 @@
+import podifyIconUrl from '@/assets/logos/podify-icon.png'
+
 export function FootIcon() {
-  return (
-    <svg width="42" height="42" viewBox="0 0 40 40" fill="none">
-      <path
-        d="M24 8c-3 0-5 2.5-5 6s2 6.5 2 10c0 4 2.5 7 6 7 3 0 5.5-2.5 5.5-6 0-3-1.5-5-1.5-8.5C31 12 28 8 24 8Z"
-        fill="#2f9d84"
-      />
-      <circle cx="18" cy="10" r="2.2" fill="#2f9d84" />
-      <circle cx="14" cy="12.5" r="2.2" fill="#2f9d84" />
-      <circle cx="11" cy="16.5" r="2.2" fill="#2f9d84" />
-    </svg>
-  )
+  return <img src={podifyIconUrl} alt="PODIFY" className="h-9 w-auto object-contain" />
 }
 
 export function GoogleIcon() {

@@ -1,11 +1,12 @@
-// Edge Function: asaas-cancel
-// Cancela a assinatura recorrente do usuário no Asaas e atualiza o profile
-// na hora (plano "expirado", assinatura_status "cancelada") — sem esperar
-// o webhook confirmar, pra UI já refletir o cancelamento na volta da chamada.
+// Edge Function: asaas-faturas
+// Devolve as últimas cobranças da assinatura do usuário logado, buscando
+// ao vivo na API do Asaas (não existe espelho local — sem tabela própria
+// de faturas no Postgres).
 //
-// Requer o secret ASAAS_API_KEY configurado no projeto (mesmo do asaas-checkout).
+// Requer o secret ASAAS_API_KEY configurado no projeto (mesmo do
+// asaas-checkout).
 //
-// Deploy: supabase functions deploy asaas-cancel
+// Deploy: supabase functions deploy asaas-faturas
 // (verify_jwt fica true — só usuário autenticado do Podify pode chamar)
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
@@ -25,6 +26,18 @@ function jsonResponse(body: unknown, status = 200) {
   });
 }
 
+interface FaturaAsaas {
+  id: string;
+  status: string;
+  value: number;
+  dueDate: string;
+  paymentDate?: string | null;
+  clientPaymentDate?: string | null;
+  billingType: string;
+  invoiceUrl?: string | null;
+  bankSlipUrl?: string | null;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: CORS_HEADERS });
@@ -35,8 +48,8 @@ Deno.serve(async (req: Request) => {
     if (!authHeader) return jsonResponse({ error: "Não autenticado." }, 401);
 
     // Client "no nome do usuário" (JWT dele repassado) — RLS garante que
-    // essa function só consegue ler/gravar o profile do próprio usuário
-    // que chamou, sem precisar de service role aqui.
+    // essa function só consegue ler o profile do próprio usuário que
+    // chamou, sem precisar de service role aqui.
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
@@ -61,24 +74,22 @@ Deno.serve(async (req: Request) => {
 
     const subscriptionId = profile.asaas_subscription_id as string | null;
     if (!subscriptionId) {
-      return jsonResponse({ error: "Nenhuma assinatura ativa encontrada para cancelar." }, 400);
+      // usuário em trial, nunca assinou — não é erro, é lista vazia
+      return jsonResponse({ ok: true, faturas: [] });
     }
 
-    await asaasFetch(`/subscriptions/${subscriptionId}`, { method: "DELETE" });
+    const resposta = await asaasFetch(`/subscriptions/${subscriptionId}/payments?limit=20`);
+    const faturas = ((resposta?.data ?? []) as FaturaAsaas[]).map((p) => ({
+      id: p.id,
+      status: p.status,
+      valor: p.value,
+      vencimento: p.dueDate,
+      pagoEm: p.paymentDate ?? p.clientPaymentDate ?? null,
+      formaPagamento: p.billingType,
+      linkFatura: p.invoiceUrl ?? p.bankSlipUrl ?? null,
+    }));
 
-    const { error: updateError } = await supabaseUser
-      .from("profiles")
-      .update({ plano: "expirado", assinatura_status: "cancelada" })
-      .eq("id", user.id);
-
-    if (updateError) {
-      return jsonResponse(
-        { error: "Assinatura cancelada no Asaas, mas houve um erro ao atualizar seu perfil. Atualize a página." },
-        500,
-      );
-    }
-
-    return jsonResponse({ ok: true });
+    return jsonResponse({ ok: true, faturas });
   } catch (err) {
     const status = err instanceof AsaasError ? 400 : 500;
     return jsonResponse({ error: err instanceof Error ? err.message : String(err) }, status);

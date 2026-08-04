@@ -68,6 +68,27 @@ function formatDataBR(iso: string | null | undefined) {
   return data.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
 }
 
+function formatBRL(valor: number | null | undefined) {
+  if (valor == null) return '—'
+  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+const STATUS_FATURA: Record<string, { label: string; className: string }> = {
+  CONFIRMED: { label: 'Pago', className: 'bg-emerald-100 text-emerald-700' },
+  RECEIVED: { label: 'Pago', className: 'bg-emerald-100 text-emerald-700' },
+  RECEIVED_IN_CASH: { label: 'Pago', className: 'bg-emerald-100 text-emerald-700' },
+  PENDING: { label: 'Pendente', className: 'bg-amber-100 text-amber-700' },
+  OVERDUE: { label: 'Vencida', className: 'bg-rose-100 text-rose-700' },
+  REFUNDED: { label: 'Estornada', className: 'bg-slate-100 text-slate-600' },
+  AWAITING_RISK_ANALYSIS: { label: 'Em análise', className: 'bg-amber-100 text-amber-700' },
+}
+
+const FORMA_PAGAMENTO_LABEL: Record<string, string> = {
+  PIX: 'Pix',
+  CREDIT_CARD: 'Cartão de crédito',
+  BOLETO: 'Boleto',
+}
+
 // Não existe uma coluna dedicada de "início da assinatura" — usa a data de
 // criação da conta como aproximação (na prática o usuário assina logo que
 // cria a conta, então cobre a grande maioria dos casos).
@@ -88,8 +109,22 @@ export default function Assinatura() {
   const [totalAnamneses, setTotalAnamneses] = useState<number | null>(null)
 
   const ilimitado = profile?.plano === 'pro' && !profile?.assinatura_expira_em
+
+  // Mesma condição de bloqueio do ProtectedRoute — usada aqui pra exibir o
+  // aviso e também pra não tratar como "ativa" uma assinatura cuja data já
+  // passou mas que o cron diário ainda não baixou pra 'expirado'.
+  const trialVencido =
+    profile?.plano === 'trial' && !!profile?.trial_expira_em && new Date(profile.trial_expira_em) < new Date()
+  const assinaturaVencida =
+    profile?.plano === 'expirado' ||
+    trialVencido ||
+    (!!profile?.assinatura_expira_em && new Date(profile.assinatura_expira_em) < new Date())
+
   const assinaturaAtivaPaga =
-    profile?.plano === 'pro' && !!profile?.assinatura_expira_em && profile?.assinatura_status === 'ativa'
+    profile?.plano === 'pro' &&
+    !!profile?.assinatura_expira_em &&
+    profile?.assinatura_status === 'ativa' &&
+    !assinaturaVencida
   const planoAtivo = ilimitado || assinaturaAtivaPaga
 
   useEffect(() => {
@@ -107,6 +142,19 @@ export default function Assinatura() {
         <h1 className="text-2xl font-extrabold text-ink-900">Assinatura</h1>
         <p className="text-sm text-slate-500">Gerencie seu plano PODIFY</p>
       </div>
+
+      {assinaturaVencida && (
+        <div className="flex items-start gap-3 rounded-xl bg-rose-50 p-4">
+          <AlertTriangle size={20} className="mt-0.5 shrink-0 text-rose-500" />
+          <p className="text-sm text-rose-700">
+            {profile?.assinatura_expira_em
+              ? `Sua assinatura venceu em ${formatDataBR(profile.assinatura_expira_em)}. Renove para continuar usando o Podify.`
+              : profile?.trial_expira_em
+                ? 'Seu período de teste terminou. Assine para continuar.'
+                : 'Sua assinatura foi encerrada. Renove para continuar usando o Podify.'}
+          </p>
+        </div>
+      )}
 
       {planoAtivo ? (
         <>
@@ -176,6 +224,8 @@ export default function Assinatura() {
                 : 'Seu pagamento está confirmado e a assinatura será renovada automaticamente. Aproveite todos os recursos!'}
             </p>
           </div>
+
+          <HistoricoFaturas />
 
           {assinaturaAtivaPaga && (
             <button
@@ -268,6 +318,111 @@ export default function Assinatura() {
   )
 }
 
+interface Fatura {
+  id: string
+  status: string
+  valor: number
+  vencimento: string
+  pagoEm: string | null
+  formaPagamento: string
+  linkFatura: string | null
+}
+
+function HistoricoFaturas() {
+  const [estado, setEstado] = useState<'carregando' | 'ok' | 'erro'>('carregando')
+  const [faturas, setFaturas] = useState<Fatura[]>([])
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function carregar() {
+    setEstado('carregando')
+    setErro(null)
+    const { data, error } = await supabase.functions.invoke('asaas-faturas')
+
+    if (error || !data?.ok) {
+      let mensagem = 'Não foi possível carregar o histórico de faturas.'
+      if (error instanceof FunctionsHttpError) {
+        try {
+          const corpo = await error.context.json()
+          if (corpo?.error) mensagem = corpo.error
+        } catch {
+          // corpo não veio em JSON, mantém a mensagem genérica
+        }
+      } else if (data?.error) {
+        mensagem = data.error
+      }
+      setErro(mensagem)
+      setEstado('erro')
+      return
+    }
+
+    setFaturas(data.faturas ?? [])
+    setEstado('ok')
+  }
+
+  useEffect(() => {
+    carregar()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  if (estado === 'carregando') {
+    return (
+      <div className="card flex items-center justify-center gap-2 p-6 text-sm text-slate-500">
+        <Loader2 size={16} className="animate-spin" /> Carregando histórico de faturas...
+      </div>
+    )
+  }
+
+  if (estado === 'erro') {
+    return (
+      <div className="card space-y-3 p-6">
+        <p className="text-sm text-rose-600">{erro}</p>
+        <button onClick={carregar} className="text-sm font-semibold text-brand-600 hover:underline">
+          Tentar novamente
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="card p-6">
+      <p className="mb-4 font-bold text-ink-900">Histórico de faturas</p>
+      {faturas.length === 0 ? (
+        <p className="text-sm text-slate-500">Nenhuma fatura ainda.</p>
+      ) : (
+        <div className="divide-y divide-slate-100">
+          {faturas.map((f) => {
+            const status = STATUS_FATURA[f.status] ?? { label: f.status, className: 'bg-slate-100 text-slate-600' }
+            return (
+              <div key={f.id} className="flex items-center justify-between gap-3 py-3 text-sm">
+                <div className="min-w-0">
+                  <p className="font-medium text-ink-900">{formatDataBR(f.vencimento)}</p>
+                  <p className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                    <span className={`rounded-full px-2 py-0.5 font-semibold ${status.className}`}>{status.label}</span>
+                    {FORMA_PAGAMENTO_LABEL[f.formaPagamento] ?? f.formaPagamento}
+                  </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-3">
+                  <span className="font-semibold text-ink-900">{formatBRL(f.valor)}</span>
+                  {f.linkFatura && (
+                    <a
+                      href={f.linkFatura}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-xs font-semibold text-brand-600 hover:underline"
+                    >
+                      Ver fatura
+                    </a>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function CancelarAssinaturaModal({ onClose }: { onClose: () => void }) {
   const refreshProfile = useAuthStore((s) => s.refreshProfile)
   const [cancelando, setCancelando] = useState(false)
@@ -353,6 +508,7 @@ function CheckoutModal({ onClose }: { onClose: () => void }) {
   const [formaPagamento, setFormaPagamento] = useState<'PIX' | 'CREDIT_CARD'>('PIX')
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const [cardDeclined, setCardDeclined] = useState(false)
   const [qrCode, setQrCode] = useState<QrCodePix | null>(null)
   const [copiado, setCopiado] = useState(false)
 
@@ -397,6 +553,7 @@ function CheckoutModal({ onClose }: { onClose: () => void }) {
 
   async function confirmarAssinatura() {
     setErro(null)
+    setCardDeclined(false)
 
     if (!nome.trim() || !cpfCnpj.trim()) {
       setErro('Preencha nome e CPF/CNPJ.')
@@ -445,6 +602,7 @@ function CheckoutModal({ onClose }: { onClose: () => void }) {
           try {
             const corpo = await error.context.json()
             if (corpo?.error) mensagem = corpo.error
+            if (corpo?.cardDeclined) setCardDeclined(true)
           } catch {
             // corpo não veio em JSON, mantém a mensagem genérica
           }
@@ -458,6 +616,7 @@ function CheckoutModal({ onClose }: { onClose: () => void }) {
 
       if (!data?.ok) {
         setErro(data?.error || 'Não foi possível concluir a assinatura. Tente novamente.')
+        if (data?.cardDeclined) setCardDeclined(true)
         setEnviando(false)
         return
       }
@@ -648,7 +807,24 @@ function CheckoutModal({ onClose }: { onClose: () => void }) {
           </div>
         )}
 
-        {erro && <p className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">{erro}</p>}
+        {erro && (
+          <div className="rounded-xl bg-rose-50 px-4 py-3 text-sm text-rose-600">
+            <p>{erro}</p>
+            {cardDeclined && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFormaPagamento('PIX')
+                  setErro(null)
+                  setCardDeclined(false)
+                }}
+                className="mt-2 inline-flex items-center gap-1.5 font-semibold text-brand-600 hover:underline"
+              >
+                <QrCode size={14} /> Pagar com Pix em vez disso
+              </button>
+            )}
+          </div>
+        )}
 
         <button
           onClick={confirmarAssinatura}

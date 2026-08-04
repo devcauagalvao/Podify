@@ -11,8 +11,8 @@
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { asaasFetch, AsaasError, buscarProximoVencimento } from "./_shared/asaas.ts";
 
-const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL") ?? "https://api.asaas.com/v3";
 const VALOR_ASSINATURA = 29.9;
 
 const CORS_HEADERS = {
@@ -26,35 +26,6 @@ function jsonResponse(body: unknown, status = 200) {
     status,
     headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
   });
-}
-
-/** Erro vindo da API do Asaas (dado inválido, cartão recusado, etc) —
- * sempre com mensagem específica o bastante pra mostrar direto pro usuário,
- * em vez de um "erro genérico". */
-class AsaasError extends Error {}
-
-async function asaasFetch(path: string, init: RequestInit = {}) {
-  const apiKey = Deno.env.get("ASAAS_API_KEY");
-  if (!apiKey) {
-    throw new Error("ASAAS_API_KEY não configurada no projeto. Configure o secret e publique a function de novo.");
-  }
-  const resp = await fetch(`${ASAAS_API_URL}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      access_token: apiKey,
-      ...init.headers,
-    },
-  });
-  const data = await resp.json().catch(() => null);
-  if (!resp.ok) {
-    const mensagem: string | undefined = data?.errors
-      ?.map((e: { description?: string }) => e.description)
-      .filter(Boolean)
-      .join(" ");
-    throw new AsaasError(mensagem || `Não foi possível concluir a operação no Asaas (HTTP ${resp.status}).`);
-  }
-  return data;
 }
 
 interface DadosCartao {
@@ -85,6 +56,20 @@ function amanhaISO() {
   const d = new Date();
   d.setDate(d.getDate() + 1);
   return d.toISOString().slice(0, 10);
+}
+
+/** Se o usuário ainda está no trial gratuito, a primeira cobrança só deve
+ * acontecer quando o trial acabar de verdade — não amanhã. Ele já cadastra
+ * a forma de pagamento agora, mas o Asaas só cobra no nextDueDate. Fora do
+ * trial (ou trial já vencido), mantém o comportamento padrão: amanhã. */
+function primeiraCobrancaISO(profile: { plano: string; trial_expira_em: string | null }) {
+  if (profile.plano === "trial" && profile.trial_expira_em) {
+    const fimTrial = new Date(profile.trial_expira_em);
+    if (!Number.isNaN(fimTrial.getTime()) && fimTrial.getTime() > Date.now()) {
+      return fimTrial.toISOString().slice(0, 10);
+    }
+  }
+  return amanhaISO();
 }
 
 Deno.serve(async (req: Request) => {
@@ -172,7 +157,7 @@ Deno.serve(async (req: Request) => {
       value: VALOR_ASSINATURA,
       cycle: "MONTHLY",
       description: "Assinatura PODIFY Pro",
-      nextDueDate: amanhaISO(),
+      nextDueDate: primeiraCobrancaISO(profile),
     };
 
     if (forma_pagamento === "CREDIT_CARD" && dados_cartao) {
@@ -209,6 +194,16 @@ Deno.serve(async (req: Request) => {
 
     await supabaseUser.from("profiles").update({ asaas_subscription_id: subscription.id }).eq("id", user.id);
 
+    // Confirma com o próprio Asaas qual foi o nextDueDate real que ELE
+    // calculou pra essa subscription (fonte da verdade, nunca calculado
+    // localmente) e já deixa isso salvo — best-effort: se falhar, não
+    // derruba o checkout (que já teve sucesso); o webhook PAYMENT_CONFIRMED
+    // cobre esse campo de qualquer forma quando o pagamento confirmar.
+    const proximoVencimento = await buscarProximoVencimento(subscription.id);
+    if (proximoVencimento) {
+      await supabaseUser.from("profiles").update({ assinatura_expira_em: proximoVencimento }).eq("id", user.id);
+    }
+
     // primeira cobrança gerada pra essa assinatura (é dela que sai o QR
     // code do Pix, ou o status do lançamento no cartão)
     const cobrancas = await asaasFetch(`/payments?subscription=${subscription.id}&limit=1`);
@@ -239,7 +234,10 @@ Deno.serve(async (req: Request) => {
     const status = primeiraCobranca?.status ?? subscription.status ?? "PENDING";
     if (status === "REFUSED" || status === "FAILED") {
       return jsonResponse(
-        { error: "O pagamento foi recusado pela operadora do cartão. Confira os dados e tente novamente." },
+        {
+          error: "O pagamento foi recusado pela operadora do cartão. Confira os dados, tente outro cartão ou pague com Pix.",
+          cardDeclined: true,
+        },
         400,
       );
     }

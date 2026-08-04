@@ -4,10 +4,13 @@ import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { ToastContainer } from '@/components/ToastContainer'
 
+import LandingPage from '@/pages/landing/LandingPage'
 import Login from '@/pages/Login'
 import SignUp from '@/pages/SignUp'
 import EsqueciSenha from '@/pages/EsqueciSenha'
 import RedefinirSenha from '@/pages/RedefinirSenha'
+import Termos from '@/pages/Termos'
+import Privacidade from '@/pages/Privacidade'
 import Dashboard from '@/pages/Dashboard'
 import Clientes from '@/pages/Clientes'
 import ClientePerfil from '@/pages/ClientePerfil'
@@ -35,6 +38,8 @@ export default function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+        <Route path="/termos" element={<Termos />} />
+        <Route path="/privacidade" element={<Privacidade />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
@@ -51,7 +56,7 @@ export default function App() {
           <Route path="/assinatura" element={<Assinatura />} />
         </Route>
 
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>

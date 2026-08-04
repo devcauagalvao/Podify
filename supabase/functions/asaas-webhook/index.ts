@@ -16,30 +16,20 @@
 // Deploy: supabase functions deploy asaas-webhook --no-verify-jwt
 // (sem verify_jwt porque quem chama é o Asaas, não um usuário logado do
 // Podify — a autenticação é feita conferindo o header asaas-access-token)
+//
+// SEGURANÇA (débito conhecido, não resolvido): o secret ASAAS_WEBHOOK_TOKEN
+// nunca foi configurado no projeto, então esta function roda sobre o valor
+// padrão abaixo desde sempre — é o valor que já está configurado no painel
+// do Asaas hoje. Setar o secret de verdade (supabase secrets set
+// ASAAS_WEBHOOK_TOKEN=<token novo>) e atualizar o mesmo valor no painel do
+// Asaas removeria esse token fixo do código-fonte, mas foi adiado a pedido
+// do usuário para não exigir nenhum passo manual agora.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { buscarProximoVencimento } from "./_shared/asaas.ts";
 
-const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL") ?? "https://api.asaas.com/v3";
-
-// Se você configurar o secret ASAAS_WEBHOOK_TOKEN (supabase secrets set
-// ASAAS_WEBHOOK_TOKEN=<seu token>), ele tem prioridade sobre esse valor
-// abaixo — o padrão aqui só existe pra function funcionar de imediato
-// (inclusive pra testes) antes de você configurar o secret de verdade.
-// Se for usar o padrão em produção, troque o token no painel do Asaas
-// pra bater com esse mesmo valor.
 const ASAAS_WEBHOOK_TOKEN_PADRAO = "51e2f614e6f00d45b83bd128ca6c149333e3a0e237ceb1ea1dfe866833540ade";
-
-async function buscarProximoVencimento(subscriptionId: string | undefined): Promise<string | null> {
-  const apiKey = Deno.env.get("ASAAS_API_KEY");
-  if (!apiKey || !subscriptionId) return null;
-  const resp = await fetch(`${ASAAS_API_URL}/subscriptions/${subscriptionId}`, {
-    headers: { access_token: apiKey },
-  });
-  if (!resp.ok) return null;
-  const data = await resp.json();
-  return data?.nextDueDate ?? null;
-}
 
 Deno.serve(async (req: Request) => {
   const tokenEsperado = Deno.env.get("ASAAS_WEBHOOK_TOKEN") ?? ASAAS_WEBHOOK_TOKEN_PADRAO;
@@ -89,12 +79,15 @@ Deno.serve(async (req: Request) => {
     switch (evento) {
       case "PAYMENT_CONFIRMED":
       case "PAYMENT_RECEIVED": {
+        // Busca o nextDueDate real no Asaas — nunca calculado localmente.
+        // Se a busca falhar (timeout, instabilidade), NÃO sobrescreve
+        // assinatura_expira_em com null: isso apagaria uma data boa já
+        // salva e faria a UI interpretar "pro sem data" como vitalício
+        // por engano. Só grava o campo quando realmente veio um valor.
         const proximoVencimento = await buscarProximoVencimento(subscriptionId);
-        profileAtualizado = await atualizarProfile({
-          plano: "pro",
-          assinatura_status: "ativa",
-          assinatura_expira_em: proximoVencimento,
-        });
+        const patch: Record<string, unknown> = { plano: "pro", assinatura_status: "ativa" };
+        if (proximoVencimento) patch.assinatura_expira_em = proximoVencimento;
+        profileAtualizado = await atualizarProfile(patch);
         break;
       }
       case "PAYMENT_OVERDUE": {

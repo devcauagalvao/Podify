@@ -29,11 +29,7 @@ export default function Login() {
 
   return (
     <AuthCard>
-      <AuthHeader
-        title="Bem-vindo(a) ao PODIFY"
-        subtitle="Entre para continuar"
-        icon={<img src="/podify-logo.jpg" alt="PODIFY" className="h-14 w-14 object-contain" />}
-      />
+      <AuthHeader title="Bem-vindo(a) ao PODIFY" subtitle="Entre para continuar" />
 
       {passwordResetSuccess && (
         <p className="mt-5 rounded-xl bg-brand-50 px-4 py-3 text-sm text-ink-900">
