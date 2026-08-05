@@ -536,12 +536,6 @@ export default function AnamneseForm() {
         <Field label="Tel. de Emergência">
           <TextInput value={dadosPessoais.telEmergencia ?? ''} onChange={(v) => setDP('telEmergencia', v)} placeholder="(00) 00000-0000" />
         </Field>
-        <Field label="Contato de Emergência">
-          <TextInput value={dadosPessoais.contatoEmergencia ?? ''} onChange={(v) => setDP('contatoEmergencia', v)} placeholder="Nome" />
-        </Field>
-        <Field label="Contato Familiar">
-          <TextInput value={dadosPessoais.contatoFamiliar ?? ''} onChange={(v) => setDP('contatoFamiliar', v)} placeholder="Nome e telefone" />
-        </Field>
         <Field label="Endereço" full>
           <TextInput value={dadosPessoais.endereco ?? ''} onChange={(v) => setDP('endereco', v)} placeholder="Rua, número, Bairro, Cidade - UF" />
         </Field>

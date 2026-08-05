@@ -214,8 +214,6 @@ const LABELS_PESSOAIS: [string, string][] = [
   ['estadoCivil', 'Estado Civil'],
   ['celular', 'Celular'],
   ['telEmergencia', 'Tel. de Emergência'],
-  ['contatoEmergencia', 'Contato de Emergência'],
-  ['contatoFamiliar', 'Contato Familiar'],
   ['endereco', 'Endereço'],
   ['cep', 'CEP'],
   ['peso', 'Peso (kg)'],

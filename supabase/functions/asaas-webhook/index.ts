@@ -17,13 +17,18 @@
 // (sem verify_jwt porque quem chama é o Asaas, não um usuário logado do
 // Podify — a autenticação é feita conferindo o header asaas-access-token)
 //
-// SEGURANÇA (débito conhecido, não resolvido): o secret ASAAS_WEBHOOK_TOKEN
-// nunca foi configurado no projeto, então esta function roda sobre o valor
-// padrão abaixo desde sempre — é o valor que já está configurado no painel
-// do Asaas hoje. Setar o secret de verdade (supabase secrets set
-// ASAAS_WEBHOOK_TOKEN=<token novo>) e atualizar o mesmo valor no painel do
-// Asaas removeria esse token fixo do código-fonte, mas foi adiado a pedido
-// do usuário para não exigir nenhum passo manual agora.
+// SEGURANÇA (débito conhecido, EM ANDAMENTO — não apagar este comentário
+// até o passo 2 abaixo estar de fato feito): o secret ASAAS_WEBHOOK_TOKEN
+// nunca foi configurado no projeto, então esta function ainda cai no valor
+// padrão abaixo, que é o mesmo token já configurado no painel do Asaas hoje.
+// A comparação em si já foi corrigida pra timing-safe (ver
+// tokensIguaisTimingSafe abaixo). Falta, nesta ordem:
+//   1. supabase secrets set ASAAS_WEBHOOK_TOKEN=<token novo e forte>
+//   2. Atualizar o mesmo token no painel do Asaas (Configurações →
+//      Integrações → Webhooks) e disparar um evento de teste no sandbox
+//      do Asaas pra confirmar que a function aceita o novo valor
+//   3. Só depois do passo 2 confirmado: apagar ASAAS_WEBHOOK_TOKEN_PADRAO e
+//      o "?? ASAAS_WEBHOOK_TOKEN_PADRAO" abaixo, deixando só o secret.
 
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -31,9 +36,23 @@ import { buscarProximoVencimento } from "./_shared/asaas.ts";
 
 const ASAAS_WEBHOOK_TOKEN_PADRAO = "51e2f614e6f00d45b83bd128ca6c149333e3a0e237ceb1ea1dfe866833540ade";
 
+// Comparação timing-safe: evita que um atacante descubra o token
+// caractere-a-caractere medindo o tempo de resposta de tentativas
+// sucessivas (timing attack). O early-return por tamanho não vaza nada
+// útil porque o tamanho do token não é segredo.
+function tokensIguaisTimingSafe(recebido: string, esperado: string): boolean {
+  const a = new TextEncoder().encode(recebido);
+  const b = new TextEncoder().encode(esperado);
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a[i] ^ b[i];
+  return diff === 0;
+}
+
 Deno.serve(async (req: Request) => {
   const tokenEsperado = Deno.env.get("ASAAS_WEBHOOK_TOKEN") ?? ASAAS_WEBHOOK_TOKEN_PADRAO;
-  if (req.headers.get("asaas-access-token") !== tokenEsperado) {
+  const tokenRecebido = req.headers.get("asaas-access-token") ?? "";
+  if (!tokensIguaisTimingSafe(tokenRecebido, tokenEsperado)) {
     return new Response(JSON.stringify({ error: "unauthorized" }), {
       status: 401,
       headers: { "Content-Type": "application/json" },

@@ -1,14 +1,17 @@
+// ⚠️ ARQUIVO DUPLICADO — SINCRONIZE MANUALMENTE COM AS OUTRAS 3 CÓPIAS SE
+// MUDAR ISSO AQUI: asaas-checkout/_shared/asaas.ts, asaas-cancel/_shared/
+// asaas.ts, asaas-faturas/_shared/asaas.ts (esta é a cópia de asaas-webhook).
+// As 4 devem ficar byte-a-byte idênticas.
+//
+// Por quê duplicado: o deploy via MCP empacota cada function isoladamente
+// e não resolve imports que escapam da própria pasta da function, então um
+// `supabase/functions/_shared/` compartilhado por import "../_shared" não
+// funciona nesse fluxo de deploy.
+//
 // Módulo compartilhado entre as Edge Functions do Asaas (asaas-checkout,
 // asaas-webhook, asaas-cancel, asaas-faturas) — fetch autenticado com
 // timeout, parse de erro do Asaas em AsaasError, e a busca do nextDueDate
 // real de uma subscription (fonte da verdade pro ciclo de cobrança).
-//
-// Duplicado (byte a byte) em cada function em vez de ficar num
-// `supabase/functions/_shared/` compartilhado por import "../_shared" —
-// o deploy via MCP empacota cada function isoladamente e não resolve
-// imports que escapam da própria pasta da function. Se editar este
-// arquivo, replique a mudança nas outras 3 cópias (asaas-checkout,
-// asaas-webhook, asaas-faturas).
 
 export const ASAAS_API_URL = Deno.env.get("ASAAS_API_URL") ?? "https://api.asaas.com/v3";
 
