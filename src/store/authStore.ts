@@ -1,8 +1,20 @@
 import { create } from 'zustand'
-import type { User } from '@supabase/supabase-js'
+import type { AuthError, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { toastError } from './toastStore'
 import type { Profile } from '@/types/database'
+
+// @supabase/auth-js não trata erros HTTP 5xx como erros de API normais: em vez
+// de repassar o corpo JSON da resposta (ex: { msg: "Error sending recovery
+// email" }), ele descarta a resposta e faz JSON.stringify() do objeto Response
+// bruto — que não tem propriedades próprias enumeráveis e vira a string
+// literal "{}". Sem esse filtro, esse "{}" vaza direto pra tela.
+function authErrorMessage(error: AuthError | null, fallback: string): string | null {
+  if (!error) return null
+  const msg = error.message?.trim()
+  if (!msg || msg === '{}' || msg === '[object Object]' || msg.startsWith('{')) return fallback
+  return msg
+}
 
 interface AuthState {
   user: User | null
@@ -70,7 +82,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signInWithPassword: async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
-    return { error: error?.message ?? null }
+    return { error: authErrorMessage(error, 'Não foi possível entrar agora. Tente novamente em instantes.') }
   },
 
   signInWithGoogle: async () => {
@@ -86,19 +98,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       password,
       options: { data },
     })
-    return { error: error?.message ?? null }
+    return { error: authErrorMessage(error, 'Não foi possível criar sua conta agora. Tente novamente em instantes.') }
   },
 
   resetPasswordForEmail: async (email) => {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: window.location.origin + '/redefinir-senha',
     })
-    return { error: error?.message ?? null }
+    return {
+      error: authErrorMessage(error, 'Não foi possível enviar o email de recuperação agora. Tente novamente em alguns minutos.'),
+    }
   },
 
   updatePassword: async (password) => {
     const { error } = await supabase.auth.updateUser({ password })
-    return { error: error?.message ?? null }
+    return { error: authErrorMessage(error, 'Não foi possível atualizar sua senha agora. Tente novamente em instantes.') }
   },
 
   signOut: async () => {
