@@ -9,6 +9,7 @@ interface AuthState {
   profile: Profile | null
   loading: boolean
   initialized: boolean
+  passwordRecovery: boolean
   init: () => Promise<void>
   signInWithPassword: (email: string, password: string) => Promise<{ error: string | null }>
   signInWithGoogle: () => Promise<void>
@@ -28,14 +29,20 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   profile: null,
   loading: true,
   initialized: false,
+  passwordRecovery: false,
 
   init: async () => {
-    const { data } = await supabase.auth.getSession()
-    set({ user: data.session?.user ?? null })
-    if (data.session?.user) await get().refreshProfile()
-    set({ loading: false, initialized: true })
-
-    supabase.auth.onAuthStateChange(async (_event, session) => {
+    // O listener precisa ser registrado ANTES do getSession(): o evento
+    // PASSWORD_RECOVERY é disparado pelo parse automático do link de recovery
+    // na URL (detectSessionInUrl), que roda de forma assíncrona logo na
+    // criação do client. Se o listener for registrado depois do getSession(),
+    // essa janela pode passar em branco e o evento nunca é capturado — nesse
+    // caso a sessão de recovery ainda existe, mas o app trata como login normal.
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        set({ user: session?.user ?? null, passwordRecovery: true, loading: false, initialized: true })
+        return
+      }
       set({ user: session?.user ?? null })
       if (session?.user) {
         await get().refreshProfile()
@@ -43,6 +50,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         set({ profile: null })
       }
     })
+
+    const { data } = await supabase.auth.getSession()
+    set({ user: data.session?.user ?? null })
+    if (data.session?.user) await get().refreshProfile()
+    set({ loading: false, initialized: true })
   },
 
   refreshProfile: async () => {
@@ -91,6 +103,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signOut: async () => {
     await supabase.auth.signOut()
-    set({ user: null, profile: null })
+    set({ user: null, profile: null, passwordRecovery: false })
   },
 }))
