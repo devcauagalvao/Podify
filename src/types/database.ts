@@ -406,6 +406,7 @@ export type Database = {
           cpf_cnpj: string | null
           created_at: string
           id: string
+          is_admin: boolean
           nome_clinica: string | null
           nome_completo: string | null
           plano: string
@@ -422,6 +423,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           id: string
+          is_admin?: boolean
           nome_clinica?: string | null
           nome_completo?: string | null
           plano?: string
@@ -438,6 +440,7 @@ export type Database = {
           cpf_cnpj?: string | null
           created_at?: string
           id?: string
+          is_admin?: boolean
           nome_clinica?: string | null
           nome_completo?: string | null
           plano?: string
@@ -452,7 +455,24 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_list_accounts: {
+        Args: never
+        Returns: {
+          id: string
+          email: string
+          nome_completo: string | null
+          nome_clinica: string | null
+          plano: string
+          assinatura_status: string
+          assinatura_expira_em: string | null
+          trial_expira_em: string | null
+          is_admin: boolean
+          created_at: string
+          clientes_count: number
+        }[]
+      }
       expirar_assinaturas_vencidas: { Args: never; Returns: undefined }
+      is_admin: { Args: never; Returns: boolean }
       purge_deleted_clientes: {
         Args: { p_dias_retencao?: number }
         Returns: undefined
@@ -604,3 +624,4 @@ export type EstoqueProduto = Database['public']['Tables']['estoque_produtos']['R
 export type Fornecedor = Database['public']['Tables']['fornecedores']['Row']
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type LiaConversa = Database['public']['Tables']['lia_conversas']['Row']
+export type AdminAccount = Database['public']['Functions']['admin_list_accounts']['Returns'][number]

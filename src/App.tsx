@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
+import { AdminRoute } from '@/routes/AdminRoute'
 import { ToastContainer } from '@/components/ToastContainer'
 
 import LandingPage from '@/pages/landing/LandingPage'
@@ -23,6 +24,7 @@ import Financeiro from '@/pages/Financeiro'
 import Estoque from '@/pages/Estoque'
 import Fornecedores from '@/pages/Fornecedores'
 import Assinatura from '@/pages/Assinatura'
+import Admin from '@/pages/Admin'
 
 function AppRoutes() {
   const passwordRecovery = useAuthStore((s) => s.passwordRecovery)
@@ -59,6 +61,14 @@ function AppRoutes() {
         <Route path="/estoque" element={<Estoque />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/assinatura" element={<Assinatura />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminRoute>
+              <Admin />
+            </AdminRoute>
+          }
+        />
       </Route>
 
       <Route path="/" element={<LandingPage />} />
