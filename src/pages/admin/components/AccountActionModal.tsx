@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import type { AdminAccount } from '@/types/database'
 import type { AcaoConta } from '../hooks/useAdminAccounts'
-import { AdminModal } from './AdminModal'
+import { Modal } from '@/components/layout/Modal'
 
 const CONFIG: Record<AcaoConta, { titulo: string; corBotao: string; descricao: ReactNode }> = {
   ilimitado: {
@@ -50,17 +50,17 @@ export function AccountActionModal({
 }) {
   const cfg = CONFIG[acao]
   return (
-    <AdminModal title={cfg.titulo} onClose={onCancelar}>
+    <Modal title={cfg.titulo} onClose={onCancelar}>
       <div className="space-y-5">
-        <div className="rounded-xl bg-slate-800/60 p-4">
-          <p className="font-semibold text-white">{conta.nome_clinica || conta.nome_completo || 'Sem nome'}</p>
-          <p className="text-sm text-slate-400">{conta.email}</p>
+        <div className="rounded-xl bg-slate-50 p-4">
+          <p className="font-semibold text-ink-900">{conta.nome_clinica || conta.nome_completo || 'Sem nome'}</p>
+          <p className="text-sm text-slate-500">{conta.email}</p>
         </div>
-        <p className="text-sm text-slate-300">{cfg.descricao}</p>
+        <p className="text-sm text-slate-600">{cfg.descricao}</p>
         <div className="flex gap-3">
           <button
             onClick={onCancelar}
-            className="min-h-[44px] flex-1 rounded-xl border border-slate-700 text-sm font-medium text-slate-300 hover:bg-slate-800"
+            className="min-h-[44px] flex-1 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50"
           >
             Cancelar
           </button>
@@ -73,6 +73,6 @@ export function AccountActionModal({
           </button>
         </div>
       </div>
-    </AdminModal>
+    </Modal>
   )
 }

@@ -13,15 +13,15 @@ export function TrialSection({ contas, onVerTodos }: { contas: AdminAccount[]; o
   if (trials.length === 0) return null
 
   return (
-    <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] p-4 sm:p-5">
+    <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 sm:p-5">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-bold text-amber-300">
+        <h2 className="flex items-center gap-2 text-sm font-bold text-amber-700">
           <Clock3 size={16} /> Período de teste (7 dias) — {trials.length}{' '}
           {trials.length === 1 ? 'conta, ordenada' : 'contas, ordenadas'} por quem vence primeiro
         </h2>
         <button
           onClick={onVerTodos}
-          className="flex items-center gap-1 text-xs font-semibold text-amber-300 hover:text-amber-200"
+          className="flex items-center gap-1 text-xs font-semibold text-amber-700 hover:text-amber-800"
         >
           Ver na lista completa <ArrowRight size={14} />
         </button>
@@ -32,10 +32,10 @@ export function TrialSection({ contas, onVerTodos }: { contas: AdminAccount[]; o
             key={conta.id}
             className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs ${
               dias <= 1
-                ? 'border-rose-500/30 bg-rose-500/10 text-rose-300'
+                ? 'border-rose-200 bg-rose-50 text-rose-700'
                 : dias <= 3
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-300'
-                  : 'border-slate-700 bg-slate-800/60 text-slate-300'
+                  ? 'border-amber-300 bg-amber-100 text-amber-800'
+                  : 'border-slate-200 bg-white text-slate-600'
             }`}
           >
             <span className="max-w-[160px] truncate font-semibold">
@@ -46,7 +46,7 @@ export function TrialSection({ contas, onVerTodos }: { contas: AdminAccount[]; o
         ))}
       </div>
       {trials.length > MAX_VISIVEIS && (
-        <p className="mt-2 text-[11px] text-amber-300/70">
+        <p className="mt-2 text-[11px] text-amber-700/80">
           +{trials.length - MAX_VISIVEIS} outras contas em trial — veja a lista completa.
         </p>
       )}

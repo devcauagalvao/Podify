@@ -65,16 +65,16 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
   return (
     <div ref={ref} className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-sm font-bold text-slate-300">
+        <h2 className="text-sm font-bold text-slate-500">
           {contas.length} {contas.length === 1 ? 'conta cadastrada' : 'contas cadastradas'} no Podify
         </h2>
         <div className="relative w-full max-w-xs sm:w-auto">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder="Buscar por nome ou e-mail..."
-            className="w-full rounded-xl border border-slate-700 bg-slate-900 py-2.5 pl-11 pr-4 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-400 focus:border-transparent sm:w-72"
+            className="input-field pl-11 sm:w-72"
           />
         </div>
       </div>
@@ -87,7 +87,7 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
             className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
               filtroStatus === f.valor
                 ? 'bg-brand-500 text-white'
-                : 'border border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                : 'border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-ink-900'
             }`}
           >
             {f.label}
@@ -98,15 +98,15 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
       {loading ? (
         <SkeletonList rows={6} avatar={false} trailing="text" />
       ) : filtradas.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-800 bg-slate-900 py-24 text-center">
-          <Users2 size={40} className="mb-3 text-slate-700" />
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-100 bg-white py-24 text-center">
+          <Users2 size={40} className="mb-3 text-slate-300" />
           <p className="font-semibold text-slate-500">Nenhuma conta encontrada</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-slate-800 bg-slate-900">
+        <div className="card overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead>
-              <tr className="border-b border-slate-800 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <th className="px-5 py-3">Conta</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Cadastro</th>
@@ -114,7 +114,7 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
                 <th className="px-5 py-3 text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-slate-100">
               {filtradas.map((conta) => (
                 <AccountRow
                   key={conta.id}

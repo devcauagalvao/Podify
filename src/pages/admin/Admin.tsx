@@ -19,8 +19,8 @@ export default function Admin() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold text-white">
-          <ShieldCheck size={24} className="text-brand-400" /> Cadastros e financeiro
+        <h1 className="flex items-center gap-2 text-2xl font-extrabold text-ink-900">
+          <ShieldCheck size={24} className="text-brand-500" /> Cadastros e financeiro
         </h1>
         <p className="text-sm text-slate-500">Visão geral de todas as contas cadastradas no Podify.</p>
       </div>

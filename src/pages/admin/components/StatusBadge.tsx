@@ -11,7 +11,7 @@ export function StatusBadge({ conta }: { conta: AdminAccount }) {
     return (
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${
-          vencido ? 'bg-rose-500/15 text-rose-400' : 'bg-amber-500/15 text-amber-400'
+          vencido ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
         }`}
       >
         Trial · {dias === null ? '—' : vencido ? 'vencido' : dias === 0 ? 'vence hoje' : `${dias}d restantes`}
@@ -21,7 +21,7 @@ export function StatusBadge({ conta }: { conta: AdminAccount }) {
 
   if (status === 'ilimitado') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-brand-500/15 px-2.5 py-1 text-xs font-bold text-brand-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-brand-100 px-2.5 py-1 text-xs font-bold text-brand-700">
         <InfinityIcon size={12} /> Ilimitado
       </span>
     )
@@ -29,14 +29,14 @@ export function StatusBadge({ conta }: { conta: AdminAccount }) {
 
   if (status === 'ativo') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-bold text-emerald-400">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">
         Ativo até {formatDataBR(conta.assinatura_expira_em) ?? '—'}
       </span>
     )
   }
 
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-slate-500/20 px-2.5 py-1 text-xs font-bold text-slate-400">
+    <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-700">
       Expirado
     </span>
   )

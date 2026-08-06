@@ -3,10 +3,11 @@ import { Navigate, Link, useLocation } from 'react-router-dom'
 import { Mail, Lock } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { AuthCard, AuthHeader, GoogleIcon } from '@/components/BrandMark'
+import { SessionLoadingScreen } from '@/components/SessionLoadingScreen'
 import { SUPPORT_WHATSAPP_URL, SUPPORT_EMAIL } from '@/lib/contact'
 
 export default function Login() {
-  const { user, signInWithPassword, signInWithGoogle } = useAuthStore()
+  const { user, profile, signInWithPassword, signInWithGoogle } = useAuthStore()
   const location = useLocation()
   const passwordResetSuccess = Boolean(
     (location.state as { passwordResetSuccess?: boolean } | null)?.passwordResetSuccess,
@@ -16,7 +17,14 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
-  if (user) return <Navigate to="/dashboard" replace />
+  if (user) {
+    // profile (de onde vem is_admin) é populado depois do user — decidir o
+    // destino antes dele chegar podia mandar um admin de verdade pro
+    // /dashboard de cliente por engano (mesma corrida corrigida no
+    // AdminRoute.tsx).
+    if (!profile) return <SessionLoadingScreen />
+    return <Navigate to={profile.is_admin ? '/admin' : '/dashboard'} replace />
+  }
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
