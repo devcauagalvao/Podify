@@ -24,7 +24,7 @@ import Financeiro from '@/pages/Financeiro'
 import Estoque from '@/pages/Estoque'
 import Fornecedores from '@/pages/Fornecedores'
 import Assinatura from '@/pages/Assinatura'
-import Admin from '@/pages/Admin'
+import Admin from '@/pages/admin/Admin'
 
 function AppRoutes() {
   const passwordRecovery = useAuthStore((s) => s.passwordRecovery)
@@ -61,15 +61,20 @@ function AppRoutes() {
         <Route path="/estoque" element={<Estoque />} />
         <Route path="/fornecedores" element={<Fornecedores />} />
         <Route path="/assinatura" element={<Assinatura />} />
-        <Route
-          path="/admin"
-          element={
-            <AdminRoute>
-              <Admin />
-            </AdminRoute>
-          }
-        />
       </Route>
+
+      {/* Fora do <ProtectedRoute> de propósito: /admin usa AdminLayout
+          (tema escuro, sem sidebar de cliente), não o AppLayout que o
+          ProtectedRoute aplicaria — AdminRoute cuida da própria checagem
+          de sessão/loading. */}
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <Admin />
+          </AdminRoute>
+        }
+      />
 
       <Route path="/" element={<LandingPage />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

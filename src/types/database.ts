@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_financeiro_cache: {
+        Row: {
+          assinantes_cortesia: number
+          assinantes_pagantes: number
+          historico_mensal: Json
+          id: string
+          mrr: number
+          recebido_mes: number
+          updated_at: string
+        }
+        Insert: {
+          assinantes_cortesia?: number
+          assinantes_pagantes?: number
+          historico_mensal?: Json
+          id?: string
+          mrr?: number
+          recebido_mes?: number
+          updated_at?: string
+        }
+        Update: {
+          assinantes_cortesia?: number
+          assinantes_pagantes?: number
+          historico_mensal?: Json
+          id?: string
+          mrr?: number
+          recebido_mes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       anamnese_fotos: {
         Row: {
           anamnese_id: string
@@ -462,6 +492,7 @@ export type Database = {
           email: string
           nome_completo: string | null
           nome_clinica: string | null
+          telefone: string | null
           plano: string
           assinatura_status: string
           assinatura_expira_em: string | null
@@ -625,3 +656,4 @@ export type Fornecedor = Database['public']['Tables']['fornecedores']['Row']
 export type Profile = Database['public']['Tables']['profiles']['Row']
 export type LiaConversa = Database['public']['Tables']['lia_conversas']['Row']
 export type AdminAccount = Database['public']['Functions']['admin_list_accounts']['Returns'][number]
+export type AdminFinanceiroCache = Database['public']['Tables']['admin_financeiro_cache']['Row']
