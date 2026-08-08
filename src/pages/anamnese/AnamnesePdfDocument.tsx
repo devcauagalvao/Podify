@@ -213,13 +213,8 @@ const LABELS_PESSOAIS: [string, string][] = [
   ['profissao', 'Profissão'],
   ['estadoCivil', 'Estado Civil'],
   ['celular', 'Celular'],
-  ['telEmergencia', 'Tel. de Emergência'],
   ['endereco', 'Endereço'],
   ['cep', 'CEP'],
-  ['peso', 'Peso (kg)'],
-  ['altura', 'Altura (m)'],
-  ['imc', 'IMC'],
-  ['medicoEspecialidade', 'Médico / Especialidade / Última consulta'],
 ]
 
 const LABELS_GERAIS: [string, string][] = [

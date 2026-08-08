@@ -14,6 +14,9 @@ import {
   Check,
   User,
   Trash2,
+  IdCard,
+  Contact,
+  PhoneCall,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toastError, toastSuccess } from '@/store/toastStore'
@@ -24,6 +27,8 @@ import { ConfirmarExclusaoModal } from '@/components/ConfirmarExclusaoModal'
 import { Skeleton, SkeletonListRow } from '@/components/Skeleton'
 import { BirthDateInput } from '@/pages/anamnese/fields'
 import { excluirClienteComCascata } from '@/lib/clientesLixeira'
+import { mascaraCpfCnpj, mascaraTelefone } from '@/lib/mascaras'
+import { ESTADOS_BRASIL } from '@/lib/estadosBrasil'
 import type { Cliente, Anamnese, Consulta } from '@/types/database'
 
 function formatDataBR(iso: string | null | undefined) {
@@ -31,6 +36,16 @@ function formatDataBR(iso: string | null | undefined) {
   const [y, m, d] = iso.split('-')
   if (!y || !m || !d) return iso
   return `${d}/${m}/${y}`
+}
+
+/** Endereço em campos separados quando o cliente tem esses dados; cai pro
+ * campo endereco antigo (fichas migradas do Base44) quando não tem. */
+function formatEndereco(c: Cliente): string | null {
+  const linha1 = [c.rua, c.numero].filter(Boolean).join(', ')
+  const cidadeEstado = [c.cidade, c.estado].filter(Boolean).join(' - ')
+  const linha2 = [c.bairro, cidadeEstado].filter(Boolean).join(', ')
+  const completo = [linha1, linha2].filter(Boolean).join(' - ')
+  return completo || c.endereco
 }
 
 const STATUS_CONSULTA_LABEL: Record<string, string> = {
@@ -158,7 +173,10 @@ export default function ClientePerfil() {
           <DadoItem icon={Phone} label="Telefone" value={cliente.telefone} />
           <DadoItem icon={Mail} label="Email" value={cliente.email} />
           <DadoItem icon={Cake} label="Data de Nascimento" value={formatDataBR(cliente.data_nascimento)} />
-          <DadoItem icon={MapPin} label="Endereço" value={cliente.endereco} />
+          <DadoItem icon={IdCard} label="CPF" value={cliente.cpf} />
+          <DadoItem icon={MapPin} label="Endereço" value={formatEndereco(cliente)} />
+          <DadoItem icon={Contact} label="Contato de Emergência" value={cliente.contato_emergencia_nome} />
+          <DadoItem icon={PhoneCall} label="Telefone de Emergência" value={cliente.telefone_emergencia} />
         </div>
         {cliente.observacoes && (
           <div className="mt-4 border-t border-slate-100 pt-4">
@@ -325,8 +343,15 @@ function EditarClienteModal({
     telefone: cliente.telefone ?? '',
     email: cliente.email ?? '',
     data_nascimento: cliente.data_nascimento ?? '',
-    endereco: cliente.endereco ?? '',
     observacoes: cliente.observacoes ?? '',
+    cpf: cliente.cpf ?? '',
+    contato_emergencia_nome: cliente.contato_emergencia_nome ?? '',
+    telefone_emergencia: cliente.telefone_emergencia ?? '',
+    rua: cliente.rua ?? '',
+    numero: cliente.numero ?? '',
+    bairro: cliente.bairro ?? '',
+    cidade: cliente.cidade ?? '',
+    estado: cliente.estado ?? '',
   })
   const [saving, setSaving] = useState(false)
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
@@ -352,8 +377,15 @@ function EditarClienteModal({
         telefone: form.telefone || null,
         email: form.email || null,
         data_nascimento: form.data_nascimento || null,
-        endereco: form.endereco || null,
         observacoes: form.observacoes || null,
+        cpf: form.cpf || null,
+        contato_emergencia_nome: form.contato_emergencia_nome || null,
+        telefone_emergencia: form.telefone_emergencia || null,
+        rua: form.rua || null,
+        numero: form.numero || null,
+        bairro: form.bairro || null,
+        cidade: form.cidade || null,
+        estado: form.estado || null,
       })
       .eq('id', cliente.id)
       .select()
@@ -401,18 +433,98 @@ function EditarClienteModal({
             />
           </div>
         </div>
-        <div>
-          <label className="label-field">Data de Nascimento</label>
-          <BirthDateInput value={form.data_nascimento} onChange={(v) => updateForm({ data_nascimento: v })} />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label-field">Data de Nascimento</label>
+            <BirthDateInput value={form.data_nascimento} onChange={(v) => updateForm({ data_nascimento: v })} />
+          </div>
+          <div>
+            <label className="label-field">CPF</label>
+            <input
+              className="input-field"
+              value={form.cpf}
+              onChange={(e) => updateForm({ cpf: mascaraCpfCnpj(e.target.value) })}
+              placeholder="000.000.000-00"
+            />
+          </div>
         </div>
-        <div>
-          <label className="label-field">Endereço</label>
-          <input
-            className="input-field"
-            value={form.endereco}
-            onChange={(e) => updateForm({ endereco: e.target.value })}
-            placeholder="Rua, número, Bairro, Cidade - UF"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label-field">Nome do Contato de Emergência</label>
+            <input
+              className="input-field"
+              value={form.contato_emergencia_nome}
+              onChange={(e) => updateForm({ contato_emergencia_nome: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label-field">Telefone de Emergência</label>
+            <input
+              className="input-field"
+              value={form.telefone_emergencia}
+              onChange={(e) => updateForm({ telefone_emergencia: mascaraTelefone(e.target.value) })}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+        </div>
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Endereço</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="label-field">Rua</label>
+              <input
+                className="input-field"
+                value={form.rua}
+                onChange={(e) => updateForm({ rua: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label-field">Número</label>
+              <input
+                className="input-field"
+                value={form.numero}
+                onChange={(e) => updateForm({ numero: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="label-field">Bairro</label>
+              <input
+                className="input-field"
+                value={form.bairro}
+                onChange={(e) => updateForm({ bairro: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label-field">Cidade</label>
+              <input
+                className="input-field"
+                value={form.cidade}
+                onChange={(e) => updateForm({ cidade: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label-field">Estado</label>
+              <select
+                className="input-field"
+                value={form.estado}
+                onChange={(e) => updateForm({ estado: e.target.value })}
+              >
+                <option value="">UF</option>
+                {ESTADOS_BRASIL.map((uf) => (
+                  <option key={uf} value={uf}>
+                    {uf}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+          {!form.rua && cliente.endereco && (
+            <p className="text-xs text-slate-400">
+              Endereço atual (formato antigo): {cliente.endereco}
+            </p>
+          )}
         </div>
         <div>
           <label className="label-field">Observações</label>

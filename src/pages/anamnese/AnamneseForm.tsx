@@ -254,17 +254,6 @@ export default function AnamneseForm() {
       })
   }, [assinaturaProfissionalPath])
 
-  // IMC automático
-  useEffect(() => {
-    const peso = parseFloat(dadosPessoais.peso)
-    const altura = parseFloat(dadosPessoais.altura)
-    if (peso > 0 && altura > 0) {
-      const imc = (peso / (altura * altura)).toFixed(1)
-      if (dadosPessoais.imc !== imc) setDP('imc', imc)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dadosPessoais.peso, dadosPessoais.altura])
-
   function toggleCondicao(setter: typeof setDC, atual: Obj, item: string) {
     const lista: string[] = atual.condicoes ?? []
     const nova = lista.includes(item) ? lista.filter((c) => c !== item) : [...lista, item]
@@ -533,26 +522,11 @@ export default function AnamneseForm() {
         <Field label="Celular">
           <TextInput value={dadosPessoais.celular ?? ''} onChange={(v) => setDP('celular', v)} placeholder="(00) 00000-0000" />
         </Field>
-        <Field label="Tel. de Emergência">
-          <TextInput value={dadosPessoais.telEmergencia ?? ''} onChange={(v) => setDP('telEmergencia', v)} placeholder="(00) 00000-0000" />
-        </Field>
         <Field label="Endereço" full>
           <TextInput value={dadosPessoais.endereco ?? ''} onChange={(v) => setDP('endereco', v)} placeholder="Rua, número, Bairro, Cidade - UF" />
         </Field>
         <Field label="CEP">
           <TextInput value={dadosPessoais.cep ?? ''} onChange={(v) => setDP('cep', v)} placeholder="00000-000" />
-        </Field>
-        <Field label="Peso (kg)">
-          <TextInput value={dadosPessoais.peso ?? ''} onChange={(v) => setDP('peso', v)} placeholder="ex: 65" />
-        </Field>
-        <Field label="Altura (m)">
-          <TextInput value={dadosPessoais.altura ?? ''} onChange={(v) => setDP('altura', v)} placeholder="ex: 1.65" />
-        </Field>
-        <Field label="IMC">
-          <TextInput value={dadosPessoais.imc ?? ''} onChange={() => {}} placeholder="Calculado" />
-        </Field>
-        <Field label="Médico / Especialidade / Última consulta" full>
-          <TextInput value={dadosPessoais.medicoEspecialidade ?? ''} onChange={(v) => setDP('medicoEspecialidade', v)} />
         </Field>
       </Section>
 

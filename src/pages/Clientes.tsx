@@ -15,6 +15,8 @@ import {
   formatarExcluidoHa,
   diasRestantesParaExpurgo,
 } from '@/lib/clientesLixeira'
+import { mascaraCpfCnpj, mascaraTelefone } from '@/lib/mascaras'
+import { ESTADOS_BRASIL } from '@/lib/estadosBrasil'
 import type { Cliente } from '@/types/database'
 
 export default function Clientes() {
@@ -281,7 +283,20 @@ function NovoClienteModal({
   onClose: () => void
   onSaved: () => void
 }) {
-  const [form, setForm] = useState({ nome: '', telefone: '', email: '', data_nascimento: '' })
+  const [form, setForm] = useState({
+    nome: '',
+    telefone: '',
+    email: '',
+    data_nascimento: '',
+    cpf: '',
+    contato_emergencia_nome: '',
+    telefone_emergencia: '',
+    rua: '',
+    numero: '',
+    bairro: '',
+    cidade: '',
+    estado: '',
+  })
   const [saving, setSaving] = useState(false)
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
@@ -305,6 +320,14 @@ function NovoClienteModal({
       telefone: form.telefone || null,
       email: form.email || null,
       data_nascimento: form.data_nascimento || null,
+      cpf: form.cpf || null,
+      contato_emergencia_nome: form.contato_emergencia_nome || null,
+      telefone_emergencia: form.telefone_emergencia || null,
+      rua: form.rua || null,
+      numero: form.numero || null,
+      bairro: form.bairro || null,
+      cidade: form.cidade || null,
+      estado: form.estado || null,
     })
     if (error) {
       setSaving(false)
@@ -348,15 +371,99 @@ function NovoClienteModal({
             />
           </div>
         </div>
-        <div>
-          <label className="label-field">Email</label>
-          <input
-            type="email"
-            className="input-field"
-            value={form.email}
-            onChange={(e) => updateForm({ email: e.target.value })}
-            placeholder="email@exemplo.com"
-          />
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label-field">Email</label>
+            <input
+              type="email"
+              className="input-field"
+              value={form.email}
+              onChange={(e) => updateForm({ email: e.target.value })}
+              placeholder="email@exemplo.com"
+            />
+          </div>
+          <div>
+            <label className="label-field">CPF</label>
+            <input
+              className="input-field"
+              value={form.cpf}
+              onChange={(e) => updateForm({ cpf: mascaraCpfCnpj(e.target.value) })}
+              placeholder="000.000.000-00"
+            />
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label-field">Nome do Contato de Emergência</label>
+            <input
+              className="input-field"
+              value={form.contato_emergencia_nome}
+              onChange={(e) => updateForm({ contato_emergencia_nome: e.target.value })}
+            />
+          </div>
+          <div>
+            <label className="label-field">Telefone de Emergência</label>
+            <input
+              className="input-field"
+              value={form.telefone_emergencia}
+              onChange={(e) => updateForm({ telefone_emergencia: mascaraTelefone(e.target.value) })}
+              placeholder="(00) 00000-0000"
+            />
+          </div>
+        </div>
+        <div className="space-y-3 border-t border-slate-100 pt-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Endereço</p>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2">
+              <label className="label-field">Rua</label>
+              <input
+                className="input-field"
+                value={form.rua}
+                onChange={(e) => updateForm({ rua: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label-field">Número</label>
+              <input
+                className="input-field"
+                value={form.numero}
+                onChange={(e) => updateForm({ numero: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="label-field">Bairro</label>
+              <input
+                className="input-field"
+                value={form.bairro}
+                onChange={(e) => updateForm({ bairro: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label-field">Cidade</label>
+              <input
+                className="input-field"
+                value={form.cidade}
+                onChange={(e) => updateForm({ cidade: e.target.value })}
+              />
+            </div>
+            <div>
+              <label className="label-field">Estado</label>
+              <select
+                className="input-field"
+                value={form.estado}
+                onChange={(e) => updateForm({ estado: e.target.value })}
+              >
+                <option value="">UF</option>
+                {ESTADOS_BRASIL.map((uf) => (
+                  <option key={uf} value={uf}>
+                    {uf}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
         <button onClick={salvar} disabled={saving} className="btn-brand flex w-full items-center justify-center gap-2">
           {justSaved ? (

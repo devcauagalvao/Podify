@@ -161,48 +161,72 @@ export type Database = {
       }
       clientes: {
         Row: {
+          bairro: string | null
           cep: string | null
+          cidade: string | null
+          contato_emergencia_nome: string | null
+          cpf: string | null
           created_at: string
           data_nascimento: string | null
           deleted_at: string | null
           email: string | null
           endereco: string | null
+          estado: string | null
           genero: string | null
           id: string
           nome: string
+          numero: string | null
           observacoes: string | null
           owner_id: string
+          rua: string | null
           telefone: string | null
+          telefone_emergencia: string | null
           updated_at: string
         }
         Insert: {
+          bairro?: string | null
           cep?: string | null
+          cidade?: string | null
+          contato_emergencia_nome?: string | null
+          cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
           deleted_at?: string | null
           email?: string | null
           endereco?: string | null
+          estado?: string | null
           genero?: string | null
           id?: string
           nome: string
+          numero?: string | null
           observacoes?: string | null
           owner_id: string
+          rua?: string | null
           telefone?: string | null
+          telefone_emergencia?: string | null
           updated_at?: string
         }
         Update: {
+          bairro?: string | null
           cep?: string | null
+          cidade?: string | null
+          contato_emergencia_nome?: string | null
+          cpf?: string | null
           created_at?: string
           data_nascimento?: string | null
           deleted_at?: string | null
           email?: string | null
           endereco?: string | null
+          estado?: string | null
           genero?: string | null
           id?: string
           nome?: string
+          numero?: string | null
           observacoes?: string | null
           owner_id?: string
+          rua?: string | null
           telefone?: string | null
+          telefone_emergencia?: string | null
           updated_at?: string
         }
         Relationships: []
