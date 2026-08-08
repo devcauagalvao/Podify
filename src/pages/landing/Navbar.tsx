@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronDown, CreditCard, LayoutGrid, Menu, Sparkles, User, X } from 'lucide-react'
 import { FootIcon } from '@/components/BrandMark'
@@ -34,12 +34,27 @@ export function Navbar() {
     else setOpen(true)
   }
 
+  // Trava o scroll do body enquanto o menu mobile está aberto — sem isso a
+  // página rolava por trás do painel translúcido e o texto do fundo
+  // "vazava" através do blur, dando a impressão de menu quebrado.
+  useEffect(() => {
+    if (!open) return
+    const originalBody = document.body.style.overflow
+    const originalHtml = document.documentElement.style.overflow
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = originalBody
+      document.documentElement.style.overflow = originalHtml
+    }
+  }, [open])
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 px-4 pt-4 sm:px-6">
       <div className="mx-auto max-w-6xl">
         <div
-          className={`border border-slate-200/70 bg-white/90 shadow-lg shadow-slate-200/50 backdrop-blur-sm transition-[border-radius] duration-300 ${
-            open ? 'rounded-[28px]' : 'rounded-full'
+          className={`border border-slate-200/70 shadow-lg shadow-slate-200/50 transition-[border-radius] duration-300 ${
+            open ? 'rounded-[28px] bg-white' : 'rounded-full bg-white/90 backdrop-blur-sm'
           }`}
         >
           <div className="flex items-center justify-between px-4 py-2 sm:px-5">
@@ -123,7 +138,7 @@ export function Navbar() {
 
         {open && (
           <div className={`overflow-hidden md:hidden ${closing ? 'animate-nav-menu-out' : 'animate-nav-menu-in'}`}>
-            <nav className="flex flex-col gap-1 border-t border-slate-100 px-4 pb-4 pt-3">
+            <nav className="flex max-h-[70vh] flex-col gap-1 overflow-y-auto border-t border-slate-100 px-4 pb-4 pt-3">
               {NAV_LINKS.map((l) => (
                 <a
                   key={l.href}

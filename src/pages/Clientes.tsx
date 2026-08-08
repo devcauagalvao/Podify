@@ -15,7 +15,7 @@ import {
   formatarExcluidoHa,
   diasRestantesParaExpurgo,
 } from '@/lib/clientesLixeira'
-import { mascaraCpfCnpj, mascaraTelefone } from '@/lib/mascaras'
+import { mascaraCpfCnpj } from '@/lib/mascaras'
 import { ESTADOS_BRASIL } from '@/lib/estadosBrasil'
 import type { Cliente } from '@/types/database'
 
@@ -289,8 +289,7 @@ function NovoClienteModal({
     email: '',
     data_nascimento: '',
     cpf: '',
-    contato_emergencia_nome: '',
-    telefone_emergencia: '',
+    contato_emergencia: '',
     rua: '',
     numero: '',
     bairro: '',
@@ -321,8 +320,7 @@ function NovoClienteModal({
       email: form.email || null,
       data_nascimento: form.data_nascimento || null,
       cpf: form.cpf || null,
-      contato_emergencia_nome: form.contato_emergencia_nome || null,
-      telefone_emergencia: form.telefone_emergencia || null,
+      contato_emergencia: form.contato_emergencia || null,
       rua: form.rua || null,
       numero: form.numero || null,
       bairro: form.bairro || null,
@@ -392,24 +390,14 @@ function NovoClienteModal({
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label-field">Nome do Contato de Emergência</label>
-            <input
-              className="input-field"
-              value={form.contato_emergencia_nome}
-              onChange={(e) => updateForm({ contato_emergencia_nome: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="label-field">Telefone de Emergência</label>
-            <input
-              className="input-field"
-              value={form.telefone_emergencia}
-              onChange={(e) => updateForm({ telefone_emergencia: mascaraTelefone(e.target.value) })}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
+        <div>
+          <label className="label-field">Contato de Emergência</label>
+          <input
+            className="input-field"
+            value={form.contato_emergencia}
+            onChange={(e) => updateForm({ contato_emergencia: e.target.value })}
+            placeholder="Nome e telefone (ex: Maria Silva - (11) 98765-4321)"
+          />
         </div>
         <div className="space-y-3 border-t border-slate-100 pt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Endereço</p>

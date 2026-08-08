@@ -7,6 +7,7 @@ import { toastError, toastSuccess } from '@/store/toastStore'
 import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { SignaturePad } from '@/components/SignaturePad'
+import { PhotoLightbox } from '@/components/PhotoLightbox'
 import { Skeleton, SkeletonSection } from '@/components/Skeleton'
 import { Section, Field, TextInput, SelectInput, SimNao, CheckPill, BirthDateInput } from './fields'
 import type { AnamnesePdfData } from './AnamnesePdfDocument'
@@ -97,6 +98,7 @@ export default function AnamneseForm() {
   const [assinaturaProfissionalSignedUrl, setAssinaturaProfissionalSignedUrl] = useState<string | null>(null)
   const [fotoPaths, setFotoPaths] = useState<string[]>([])
   const [fotoSignedUrls, setFotoSignedUrls] = useState<Record<string, string>>({})
+  const [fotoAberta, setFotoAberta] = useState<string | null>(null)
 
   function setClienteIdDirty(v: string) {
     markDirty()
@@ -757,7 +759,19 @@ export default function AnamneseForm() {
             <div className="mb-3 grid grid-cols-3 gap-2 sm:grid-cols-5">
               {fotoPaths.map((path) =>
                 fotoSignedUrls[path] ? (
-                  <img key={path} src={fotoSignedUrls[path]} className="aspect-square rounded-lg object-cover" />
+                  <button
+                    key={path}
+                    type="button"
+                    onClick={() => setFotoAberta(path)}
+                    className="aspect-square overflow-hidden rounded-lg"
+                    title="Ver foto"
+                  >
+                    <img
+                      src={fotoSignedUrls[path]}
+                      className="h-full w-full object-cover"
+                      alt="Foto do atendimento"
+                    />
+                  </button>
                 ) : (
                   <Skeleton key={path} className="aspect-square rounded-lg" />
                 ),
@@ -881,6 +895,14 @@ export default function AnamneseForm() {
           </button>
         </div>
       </div>
+
+      {fotoAberta && fotoSignedUrls[fotoAberta] && (
+        <PhotoLightbox
+          url={fotoSignedUrls[fotoAberta]}
+          filename={fotoAberta.split('/').pop() ?? 'foto.jpg'}
+          onClose={() => setFotoAberta(null)}
+        />
+      )}
     </div>
   )
 }

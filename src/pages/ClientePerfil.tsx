@@ -16,7 +16,6 @@ import {
   Trash2,
   IdCard,
   Contact,
-  PhoneCall,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toastError, toastSuccess } from '@/store/toastStore'
@@ -27,7 +26,7 @@ import { ConfirmarExclusaoModal } from '@/components/ConfirmarExclusaoModal'
 import { Skeleton, SkeletonListRow } from '@/components/Skeleton'
 import { BirthDateInput } from '@/pages/anamnese/fields'
 import { excluirClienteComCascata } from '@/lib/clientesLixeira'
-import { mascaraCpfCnpj, mascaraTelefone } from '@/lib/mascaras'
+import { mascaraCpfCnpj } from '@/lib/mascaras'
 import { ESTADOS_BRASIL } from '@/lib/estadosBrasil'
 import type { Cliente, Anamnese, Consulta } from '@/types/database'
 
@@ -175,8 +174,7 @@ export default function ClientePerfil() {
           <DadoItem icon={Cake} label="Data de Nascimento" value={formatDataBR(cliente.data_nascimento)} />
           <DadoItem icon={IdCard} label="CPF" value={cliente.cpf} />
           <DadoItem icon={MapPin} label="Endereço" value={formatEndereco(cliente)} />
-          <DadoItem icon={Contact} label="Contato de Emergência" value={cliente.contato_emergencia_nome} />
-          <DadoItem icon={PhoneCall} label="Telefone de Emergência" value={cliente.telefone_emergencia} />
+          <DadoItem icon={Contact} label="Contato de Emergência" value={cliente.contato_emergencia} />
         </div>
         {cliente.observacoes && (
           <div className="mt-4 border-t border-slate-100 pt-4">
@@ -345,8 +343,7 @@ function EditarClienteModal({
     data_nascimento: cliente.data_nascimento ?? '',
     observacoes: cliente.observacoes ?? '',
     cpf: cliente.cpf ?? '',
-    contato_emergencia_nome: cliente.contato_emergencia_nome ?? '',
-    telefone_emergencia: cliente.telefone_emergencia ?? '',
+    contato_emergencia: cliente.contato_emergencia ?? '',
     rua: cliente.rua ?? '',
     numero: cliente.numero ?? '',
     bairro: cliente.bairro ?? '',
@@ -379,8 +376,7 @@ function EditarClienteModal({
         data_nascimento: form.data_nascimento || null,
         observacoes: form.observacoes || null,
         cpf: form.cpf || null,
-        contato_emergencia_nome: form.contato_emergencia_nome || null,
-        telefone_emergencia: form.telefone_emergencia || null,
+        contato_emergencia: form.contato_emergencia || null,
         rua: form.rua || null,
         numero: form.numero || null,
         bairro: form.bairro || null,
@@ -448,24 +444,14 @@ function EditarClienteModal({
             />
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="label-field">Nome do Contato de Emergência</label>
-            <input
-              className="input-field"
-              value={form.contato_emergencia_nome}
-              onChange={(e) => updateForm({ contato_emergencia_nome: e.target.value })}
-            />
-          </div>
-          <div>
-            <label className="label-field">Telefone de Emergência</label>
-            <input
-              className="input-field"
-              value={form.telefone_emergencia}
-              onChange={(e) => updateForm({ telefone_emergencia: mascaraTelefone(e.target.value) })}
-              placeholder="(00) 00000-0000"
-            />
-          </div>
+        <div>
+          <label className="label-field">Contato de Emergência</label>
+          <input
+            className="input-field"
+            value={form.contato_emergencia}
+            onChange={(e) => updateForm({ contato_emergencia: e.target.value })}
+            placeholder="Nome e telefone (ex: Maria Silva - (11) 98765-4321)"
+          />
         </div>
         <div className="space-y-3 border-t border-slate-100 pt-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Endereço</p>
