@@ -1,34 +1,14 @@
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Menu, X } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Sidebar } from './Sidebar'
+import { useLockBodyScroll } from '@/hooks/useLockBodyScroll'
 import logoHorizontalUrl from '@/assets/logos/podify-horizontal.png'
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false)
 
-  // Trava o scroll da página por trás enquanto o drawer mobile está aberto
-  // (senão o conteúdo por trás rola junto no touch/scroll do celular).
-  // Usa position:fixed pra travar de verdade no iOS e restaura a posição
-  // de rolagem exata ao fechar.
-  useEffect(() => {
-    if (!mobileOpen) return
-    const scrollY = window.scrollY
-    const { style } = document.body
-    style.position = 'fixed'
-    style.top = `-${scrollY}px`
-    style.left = '0'
-    style.right = '0'
-    style.overflow = 'hidden'
-    return () => {
-      style.position = ''
-      style.top = ''
-      style.left = ''
-      style.right = ''
-      style.overflow = ''
-      window.scrollTo(0, scrollY)
-    }
-  }, [mobileOpen])
+  useLockBodyScroll(mobileOpen)
 
   function closeMobile() {
     setMobileOpen(false)

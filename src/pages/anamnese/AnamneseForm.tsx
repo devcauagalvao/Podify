@@ -770,6 +770,7 @@ export default function AnamneseForm() {
                       src={fotoSignedUrls[path]}
                       className="h-full w-full object-cover"
                       alt="Foto do atendimento"
+                      loading="lazy"
                     />
                   </button>
                 ) : (

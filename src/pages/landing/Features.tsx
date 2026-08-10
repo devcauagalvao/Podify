@@ -199,7 +199,7 @@ function FeaturePreview({ id, onSelect }: { id: FeatureId; onSelect: (id: Featur
       </div>
       <div className="flex">
         <div className="hidden w-[168px] shrink-0 flex-col border-r border-slate-100 bg-white py-5 md:flex">
-          <img src={logoHorizontalUrl} alt="Podify" className="mb-4 h-auto w-[104px] px-4 object-contain" />
+          <img src={logoHorizontalUrl} alt="Podify" className="mb-4 h-auto w-[104px] px-4 object-contain" loading="lazy" />
           <nav className="space-y-1 px-3">
             {FEATURES.map((f) => {
               const ativo = f.id === id

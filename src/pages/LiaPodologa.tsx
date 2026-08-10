@@ -175,7 +175,7 @@ export default function LiaPodologa() {
               }`}
             >
               {m.imagem_url && (
-                <img src={m.imagem_url} alt="Foto enviada" className="mb-2 rounded-lg" />
+                <img src={m.imagem_url} alt="Foto enviada" className="mb-2 rounded-lg" loading="lazy" />
               )}
               {m.conteudo}
             </div>

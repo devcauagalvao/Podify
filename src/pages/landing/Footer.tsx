@@ -64,7 +64,7 @@ export function Footer() {
             rel="noreferrer"
             className="mt-6 inline-block w-fit opacity-90 transition hover:opacity-100"
           >
-            <img src={glvLogoUrl} alt="by GLV Tecnologia" className="h-16 w-auto object-contain" />
+            <img src={glvLogoUrl} alt="by GLV Tecnologia" className="h-16 w-auto object-contain" loading="lazy" />
           </a>
         </div>
       </div>
