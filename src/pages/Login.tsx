@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { AuthCard, AuthHeader, GoogleIcon } from '@/components/BrandMark'
 import { SessionLoadingScreen } from '@/components/SessionLoadingScreen'
 import { SUPPORT_WHATSAPP_URL, SUPPORT_EMAIL } from '@/lib/contact'
+import glvLogo from '@/assets/logos/glv-tecnologia.png'
 
 export default function Login() {
   const { user, profile, signInWithPassword, signInWithGoogle } = useAuthStore()
@@ -118,6 +119,15 @@ export default function Login() {
           {SUPPORT_EMAIL}
         </a>
       </p>
+
+      <a
+        href="https://glvtecnologia.com.br"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="mt-0 flex items-center justify-center opacity-90 transition hover:opacity-60"
+      >
+        <img src={glvLogo} alt="GLV Tecnologia" className="h-20 w-auto object-contain" />
+      </a>
     </AuthCard>
   )
 }

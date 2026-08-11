@@ -17,6 +17,7 @@ import { clsx } from 'clsx'
 import { useAuthStore } from '@/store/authStore'
 import { SUPPORT_WHATSAPP_URL, SUPPORT_EMAIL } from '@/lib/contact'
 import logoHorizontalUrl from '@/assets/logos/podify-horizontal.png'
+import glvLogo from '@/assets/logos/glv-tecnologia.png'
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutGrid },
@@ -91,6 +92,15 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         >
           <LogOut size={18} /> Sair
         </button>
+
+        <a
+          href="https://glvtecnologia.com.br"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center pt-4 opacity-90 transition hover:opacity-60"
+        >
+          <img src={glvLogo} alt="GLV Tecnologia" className="h-11 w-auto object-contain" />
+        </a>
       </div>
     </div>
   )
