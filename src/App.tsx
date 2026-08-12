@@ -1,5 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/react'
 import { useAuthStore } from '@/store/authStore'
 import { ProtectedRoute } from '@/routes/ProtectedRoute'
 import { AdminRoute } from '@/routes/AdminRoute'
@@ -103,6 +105,8 @@ export default function App() {
     <BrowserRouter>
       <ToastContainer />
       <AppRoutes />
+      <Analytics />
+      <SpeedInsights />
     </BrowserRouter>
   )
 }
