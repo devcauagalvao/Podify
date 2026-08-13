@@ -15,6 +15,7 @@ export default defineConfig({
                 name: 'Podify — Gestão para Podólogos',
                 short_name: 'Podify',
                 description: 'Sistema completo de gestão para clínicas de podologia',
+                lang: 'pt-BR',
                 theme_color: '#2f9d84',
                 background_color: '#eef3f1',
                 display: 'standalone',
