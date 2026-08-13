@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "br.com.podify.app",
+    "sha256_cert_fingerprints": ["6C:16:95:2D:84:47:D4:28:0A:22:DC:66:4E:9D:83:B8:02:FF:B9:86:61:F2:5F:D9:14:A5:2B:BA:4A:BC:13:4F"]
+  }
+}]
