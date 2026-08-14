@@ -17,6 +17,7 @@ import ConfirmarRedefinicao from '@/pages/ConfirmarRedefinicao'
 import RedefinirSenha from '@/pages/RedefinirSenha'
 import Termos from '@/pages/Termos'
 import Privacidade from '@/pages/Privacidade'
+import ExcluirConta from '@/pages/ExcluirConta'
 
 // Todo o resto é lazy: cada tela só baixa/processa quando o usuário
 // realmente navega até ela, em vez de tudo entrar no bundle inicial.
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
         <Route path="/termos" element={<Termos />} />
         <Route path="/privacidade" element={<Privacidade />} />
+        <Route path="/excluir-conta" element={<ExcluirConta />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
