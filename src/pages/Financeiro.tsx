@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Plus, TrendingUp, TrendingDown, Wallet, Check, FileDown } from 'lucide-react'
+import { Plus, TrendingUp, TrendingDown, Wallet, Check, FileDown, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { toastError, toastSuccess } from '@/store/toastStore'
 import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
+import { ConfirmarExclusaoModal } from '@/components/ConfirmarExclusaoModal'
 import { Skeleton, SkeletonStatCards } from '@/components/Skeleton'
 import type { FinanceiroPdfData } from './FinanceiroPdfDocument'
 import type { Cliente, FinanceiroRegistro } from '@/types/database'
@@ -103,6 +104,8 @@ export default function Financeiro() {
   const [modalOpen, setModalOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [clientes, setClientes] = useState<Pick<Cliente, 'id' | 'nome'>[]>([])
+  const [excluirAlvo, setExcluirAlvo] = useState<RegistroComCliente | null>(null)
+  const [excluindo, setExcluindo] = useState(false)
 
   const [extratoModo, setExtratoModo] = useState<ExtratoModo>('mensal')
   const [extratoSemanaRef, setExtratoSemanaRef] = useState(() => fmtISODate(new Date()))
@@ -169,6 +172,25 @@ export default function Financeiro() {
       cancelled = true
     }
   }, [periodoExtrato.inicio, periodoExtrato.fim])
+
+  async function confirmarExclusao() {
+    if (!excluirAlvo || !user) return
+    setExcluindo(true)
+    const { error } = await supabase
+      .from('financeiro_registros')
+      .delete()
+      .eq('id', excluirAlvo.id)
+      .eq('owner_id', user.id)
+    setExcluindo(false)
+    if (error) {
+      toastError(`Não foi possível excluir o registro: ${error.message}`)
+      return
+    }
+    setRegistros((prev) => prev.filter((r) => r.id !== excluirAlvo.id))
+    setExtratoRegistros((prev) => prev.filter((r) => r.id !== excluirAlvo.id))
+    toastSuccess('Registro excluído com sucesso.')
+    setExcluirAlvo(null)
+  }
 
   const entradas = registros.filter((r) => r.tipo === 'entrada').reduce((s, r) => s + Number(r.valor), 0)
   const saidas = registros.filter((r) => r.tipo === 'saida').reduce((s, r) => s + Number(r.valor), 0)
@@ -333,7 +355,10 @@ export default function Financeiro() {
         {!loading && registros.length > 0 && (
           <div className="divide-y divide-slate-100">
             {registros.map((r) => (
-              <div key={r.id} className="flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between">
+              <div
+                key={r.id}
+                className="group flex flex-col gap-1 py-3 sm:flex-row sm:items-center sm:justify-between"
+              >
                 <div>
                   <p className="font-medium text-ink-900">
                     {r.descricao || r.categoria}
@@ -343,9 +368,18 @@ export default function Financeiro() {
                     {new Date(r.data).toLocaleDateString('pt-BR')} · {r.categoria} · {r.status_pagamento}
                   </p>
                 </div>
-                <span className={`font-bold ${r.tipo === 'entrada' ? 'text-emerald-600' : 'text-rose-500'}`}>
-                  {r.tipo === 'entrada' ? '+' : '-'} {fmt(Number(r.valor))}
-                </span>
+                <div className="flex items-center gap-1">
+                  <span className={`font-bold ${r.tipo === 'entrada' ? 'text-emerald-600' : 'text-rose-500'}`}>
+                    {r.tipo === 'entrada' ? '+' : '-'} {fmt(Number(r.valor))}
+                  </span>
+                  <button
+                    onClick={() => setExcluirAlvo(r)}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-300 opacity-60 transition hover:bg-rose-50 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100"
+                    title="Excluir lançamento"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -510,11 +544,12 @@ export default function Financeiro() {
                     <th className="pb-2 font-medium">Cliente</th>
                     <th className="pb-2 font-medium">Descrição</th>
                     <th className="pb-2 text-right font-medium">Valor</th>
+                    <th className="pb-2"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {extratoRegistros.map((r) => (
-                    <tr key={r.id}>
+                    <tr key={r.id} className="group">
                       <td className="whitespace-nowrap py-2">{formatDateBR(r.data)}</td>
                       <td className="py-2">{r.tipo === 'entrada' ? 'Entrada' : 'Saída'}</td>
                       <td className="py-2">{CATEGORIA_LABELS[r.categoria] ?? r.categoria}</td>
@@ -525,6 +560,15 @@ export default function Financeiro() {
                       >
                         {r.tipo === 'entrada' ? '+ ' : '- '}
                         {fmt(Number(r.valor))}
+                      </td>
+                      <td className="py-2 pl-2 text-right">
+                        <button
+                          onClick={() => setExcluirAlvo(r)}
+                          className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-300 opacity-60 transition hover:bg-rose-50 hover:text-rose-500 sm:opacity-0 sm:group-hover:opacity-100"
+                          title="Excluir lançamento"
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -544,6 +588,16 @@ export default function Financeiro() {
             setModalOpen(false)
             carregar()
           }}
+        />
+      )}
+
+      {excluirAlvo && (
+        <ConfirmarExclusaoModal
+          titulo="Excluir este lançamento?"
+          mensagem={`${excluirAlvo.descricao || CATEGORIA_LABELS[excluirAlvo.categoria] || excluirAlvo.categoria} — ${fmt(Number(excluirAlvo.valor))} de ${formatDateBR(excluirAlvo.data)}. Esta ação não pode ser desfeita.`}
+          excluindo={excluindo}
+          onConfirmar={confirmarExclusao}
+          onClose={() => setExcluirAlvo(null)}
         />
       )}
     </div>
