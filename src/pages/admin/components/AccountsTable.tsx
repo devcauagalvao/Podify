@@ -3,20 +3,20 @@ import { Search, Users2 } from 'lucide-react'
 import { SkeletonList } from '@/components/Skeleton'
 import type { AdminAccount } from '@/types/database'
 import type { AcaoConta, EdicaoConta } from '../hooks/useAdminAccounts'
-import type { StatusConta } from '../utils'
+import type { OrigemConta } from '../utils'
 import { AccountRow } from './AccountRow'
 import { AccountActionModal } from './AccountActionModal'
 import { EditAccountModal } from './EditAccountModal'
-import { statusConta } from '../utils'
+import { origemConta } from '../utils'
 
-export type FiltroStatus = 'todos' | StatusConta
+export type FiltroStatus = 'todos' | OrigemConta
 
 const FILTROS: { valor: FiltroStatus; label: string }[] = [
   { valor: 'todos', label: 'Todos' },
+  { valor: 'pagante', label: 'Pagantes reais' },
+  { valor: 'manual', label: 'Acesso manual' },
   { valor: 'trial', label: 'Trial' },
-  { valor: 'ativo', label: 'Ativo' },
-  { valor: 'ilimitado', label: 'Ilimitado' },
-  { valor: 'expirado', label: 'Expirado' },
+  { valor: 'expirado', label: 'Expirados' },
 ]
 
 interface Props {
@@ -40,7 +40,7 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase()
     return contas.filter((c) => {
-      if (filtroStatus !== 'todos' && statusConta(c) !== filtroStatus) return false
+      if (filtroStatus !== 'todos' && origemConta(c) !== filtroStatus) return false
       if (!termo) return true
       return [c.nome_completo, c.nome_clinica, c.email].some((v) => v?.toLowerCase().includes(termo))
     })
@@ -104,11 +104,12 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
         </div>
       ) : (
         <div className="card overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-sm">
+          <table className="w-full min-w-[840px] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-400">
                 <th className="px-5 py-3">Conta</th>
                 <th className="px-4 py-3">Status</th>
+                <th className="px-4 py-3">Origem</th>
                 <th className="px-4 py-3">Cadastro</th>
                 <th className="px-4 py-3">Clientes</th>
                 <th className="px-5 py-3 text-right">Ações</th>

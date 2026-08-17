@@ -18,6 +18,17 @@ export function statusConta(conta: AdminAccount): StatusConta {
   return 'expirado'
 }
 
+export type OrigemConta = 'pagante' | 'manual' | 'trial' | 'expirado'
+
+// asaas_subscription_id preenchido = tem assinatura ativa no Asaas (pagou de
+// verdade). Nulo com plano=pro = liberado manualmente pelo admin (botão
+// "Ilimitado" ou "Ativo por 30 dias"), sem nunca ter passado pelo checkout.
+export function origemConta(conta: AdminAccount): OrigemConta {
+  if (conta.plano === 'trial') return 'trial'
+  if (conta.plano === 'pro') return conta.asaas_subscription_id ? 'pagante' : 'manual'
+  return 'expirado'
+}
+
 /** Dias até `iso`, arredondado pra cima (hoje mesmo vira 0, não negativo
  * por causa de horas já passadas no dia). Null se não houver data, pode
  * vir negativo se `iso` já passou. */

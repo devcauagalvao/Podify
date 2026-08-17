@@ -27,7 +27,20 @@ export function GoogleIcon() {
   )
 }
 
-export function AuthCard({ children }: { children: React.ReactNode }) {
+/** `compact`: a tela cabe inteira na viewport sem scroll (usado no Login,
+ * que precisa caber mesmo em celulares antigos com altura a partir de
+ * 600px). As demais telas de auth (cadastro, redefinição) têm mais campos
+ * e continuam com o comportamento padrão de rolar se precisar. Usa um único
+ * espaçamento compacto (sem breakpoint por altura) pra nunca correr o risco
+ * de um valor "espaçoso" não caber e virar scroll escondido dentro do card. */
+export function AuthCard({ children, compact = false }: { children: React.ReactNode; compact?: boolean }) {
+  if (compact) {
+    return (
+      <div className="flex h-dvh flex-col items-center justify-center overflow-hidden bg-surface px-4 py-3">
+        <div className="card w-full max-w-md overflow-y-auto px-6 py-5 sm:px-8">{children}</div>
+      </div>
+    )
+  }
   return (
     <div className="flex min-h-screen items-center justify-center bg-surface px-4 py-10">
       <div className="card w-full max-w-md px-8 py-10 sm:px-10">{children}</div>
@@ -39,18 +52,26 @@ export function AuthHeader({
   title,
   subtitle,
   icon,
+  compact = false,
 }: {
   title: string
   subtitle: string
   icon?: React.ReactNode
+  compact?: boolean
 }) {
   return (
     <div className="flex flex-col items-center">
-      <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-slate-100">
+      <div
+        className={
+          compact
+            ? 'mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-slate-100'
+            : 'mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-white shadow-md ring-1 ring-slate-100'
+        }
+      >
         {icon ?? <FootIcon />}
       </div>
-      <h1 className="text-2xl font-extrabold text-ink-900">{title}</h1>
-      <p className="mt-1.5 text-sm text-slate-500">{subtitle}</p>
+      <h1 className={compact ? 'text-xl font-extrabold text-ink-900' : 'text-2xl font-extrabold text-ink-900'}>{title}</h1>
+      <p className={compact ? 'mt-1 text-xs text-slate-500' : 'mt-1.5 text-sm text-slate-500'}>{subtitle}</p>
     </div>
   )
 }

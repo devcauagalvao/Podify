@@ -532,6 +532,7 @@ export type Database = {
           is_admin: boolean
           created_at: string
           clientes_count: number
+          asaas_subscription_id: string | null
         }[]
       }
       expirar_assinaturas_vencidas: { Args: never; Returns: undefined }

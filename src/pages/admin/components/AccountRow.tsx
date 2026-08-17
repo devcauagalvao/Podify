@@ -4,6 +4,7 @@ import type { AdminAccount } from '@/types/database'
 import type { AcaoConta } from '../hooks/useAdminAccounts'
 import { formatDataBR } from '../utils'
 import { StatusBadge } from './StatusBadge'
+import { OrigemBadge } from './OrigemBadge'
 
 export function AccountRow({
   conta,
@@ -46,6 +47,9 @@ export function AccountRow({
       </td>
       <td className="px-4 py-4">
         <StatusBadge conta={conta} />
+      </td>
+      <td className="px-4 py-4">
+        <OrigemBadge conta={conta} />
       </td>
       <td className="px-4 py-4 text-slate-600">{formatDataBR(conta.created_at)}</td>
       <td className="px-4 py-4 text-slate-600">{conta.clientes_count}</td>
