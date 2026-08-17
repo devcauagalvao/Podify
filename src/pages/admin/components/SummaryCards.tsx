@@ -4,17 +4,17 @@ import { origemConta, statusConta } from '../utils'
 
 export function SummaryCards({ contas }: { contas: AdminAccount[] }) {
   const total = contas.length
-  const trial = contas.filter((c) => statusConta(c) === 'trial').length
   const pagantesReais = contas.filter((c) => origemConta(c) === 'pagante').length
   const acessoManual = contas.filter((c) => origemConta(c) === 'manual').length
+  const trial = contas.filter((c) => statusConta(c) === 'trial').length
   const expiradas = contas.filter((c) => statusConta(c) === 'expirado').length
 
   const cards = [
     { label: 'Contas cadastradas', valor: total, icon: Users2, bg: 'bg-slate-500' },
-    { label: 'Em trial', valor: trial, icon: Clock3, bg: 'bg-amber-500' },
     { label: 'Pagantes reais', valor: pagantesReais, icon: DollarSign, bg: 'bg-emerald-500' },
-    { label: 'Acesso manual (cortesia)', valor: acessoManual, icon: ShieldCheck, bg: 'bg-violet-500' },
-    { label: 'Expiradas', valor: expiradas, icon: XCircle, bg: 'bg-rose-500' },
+    { label: 'Acesso manual / Cortesia', valor: acessoManual, icon: ShieldCheck, bg: 'bg-blue-500' },
+    { label: 'Em trial', valor: trial, icon: Clock3, bg: 'bg-amber-500' },
+    { label: 'Expirados', valor: expiradas, icon: XCircle, bg: 'bg-rose-500' },
   ]
 
   return (

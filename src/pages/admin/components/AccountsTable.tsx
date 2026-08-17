@@ -1,5 +1,5 @@
 import { forwardRef, useMemo, useState } from 'react'
-import { Search, Users2 } from 'lucide-react'
+import { Search, Users2, DollarSign, ShieldCheck, Clock3, XCircle } from 'lucide-react'
 import { SkeletonList } from '@/components/Skeleton'
 import type { AdminAccount } from '@/types/database'
 import type { AcaoConta, EdicaoConta } from '../hooks/useAdminAccounts'
@@ -11,12 +11,54 @@ import { origemConta } from '../utils'
 
 export type FiltroStatus = 'todos' | OrigemConta
 
-const FILTROS: { valor: FiltroStatus; label: string }[] = [
-  { valor: 'todos', label: 'Todos' },
-  { valor: 'pagante', label: 'Pagantes reais' },
-  { valor: 'manual', label: 'Acesso manual' },
-  { valor: 'trial', label: 'Trial' },
-  { valor: 'expirado', label: 'Expirados' },
+const ABAS: {
+  valor: FiltroStatus
+  label: string
+  icon: typeof Users2
+  ativo: string
+  badgeAtivo: string
+  inativo: string
+}[] = [
+  {
+    valor: 'todos',
+    label: 'Todos',
+    icon: Users2,
+    ativo: 'border-slate-500 text-slate-900',
+    badgeAtivo: 'bg-slate-200 text-slate-800',
+    inativo: 'border-transparent text-slate-500 hover:text-ink-900',
+  },
+  {
+    valor: 'pagante',
+    label: 'Pagantes reais',
+    icon: DollarSign,
+    ativo: 'border-emerald-500 text-emerald-700',
+    badgeAtivo: 'bg-emerald-100 text-emerald-700',
+    inativo: 'border-transparent text-slate-500 hover:text-emerald-700',
+  },
+  {
+    valor: 'manual',
+    label: 'Acesso manual',
+    icon: ShieldCheck,
+    ativo: 'border-blue-500 text-blue-700',
+    badgeAtivo: 'bg-blue-100 text-blue-700',
+    inativo: 'border-transparent text-slate-500 hover:text-blue-700',
+  },
+  {
+    valor: 'trial',
+    label: 'Trial',
+    icon: Clock3,
+    ativo: 'border-amber-500 text-amber-700',
+    badgeAtivo: 'bg-amber-100 text-amber-700',
+    inativo: 'border-transparent text-slate-500 hover:text-amber-700',
+  },
+  {
+    valor: 'expirado',
+    label: 'Expirados',
+    icon: XCircle,
+    ativo: 'border-rose-500 text-rose-700',
+    badgeAtivo: 'bg-rose-100 text-rose-700',
+    inativo: 'border-transparent text-slate-500 hover:text-rose-700',
+  },
 ]
 
 interface Props {
@@ -36,6 +78,12 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
   const [acaoPendente, setAcaoPendente] = useState<{ conta: AdminAccount; acao: AcaoConta } | null>(null)
   const [contaEditando, setContaEditando] = useState<AdminAccount | null>(null)
   const [salvando, setSalvando] = useState(false)
+
+  const contagens = useMemo(() => {
+    const base: Record<FiltroStatus, number> = { todos: contas.length, pagante: 0, manual: 0, trial: 0, expirado: 0 }
+    for (const c of contas) base[origemConta(c)]++
+    return base
+  }, [contas])
 
   const filtradas = useMemo(() => {
     const termo = busca.trim().toLowerCase()
@@ -79,18 +127,24 @@ export const AccountsTable = forwardRef<HTMLDivElement, Props>(function Accounts
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {FILTROS.map((f) => (
+      <div className="flex gap-1 overflow-x-auto border-b border-slate-200">
+        {ABAS.map(({ valor, label, icon: Icon, ativo, badgeAtivo, inativo }) => (
           <button
-            key={f.valor}
-            onClick={() => setFiltroStatus(f.valor)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-              filtroStatus === f.valor
-                ? 'bg-brand-500 text-white'
-                : 'border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-ink-900'
+            key={valor}
+            onClick={() => setFiltroStatus(valor)}
+            className={`flex shrink-0 items-center gap-2 border-b-2 px-3.5 py-2.5 text-sm font-semibold transition ${
+              filtroStatus === valor ? ativo : inativo
             }`}
           >
-            {f.label}
+            <Icon size={15} />
+            {label}
+            <span
+              className={`rounded-full px-2 py-0.5 text-xs font-bold ${
+                filtroStatus === valor ? badgeAtivo : 'bg-slate-100 text-slate-500'
+              }`}
+            >
+              {contagens[valor]}
+            </span>
           </button>
         ))}
       </div>

@@ -4,7 +4,7 @@ import { origemConta } from '../utils'
 
 const ESTILOS = {
   pagante: { label: 'Pagante', className: 'bg-emerald-100 text-emerald-700', icon: DollarSign },
-  manual: { label: 'Acesso manual', className: 'bg-violet-100 text-violet-700', icon: ShieldCheck },
+  manual: { label: 'Acesso manual', className: 'bg-blue-100 text-blue-700', icon: ShieldCheck },
   trial: { label: 'Trial', className: 'bg-amber-100 text-amber-700', icon: Clock3 },
   expirado: { label: 'Expirado', className: 'bg-rose-100 text-rose-700', icon: XCircle },
 } as const
