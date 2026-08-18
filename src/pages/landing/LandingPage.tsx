@@ -45,7 +45,7 @@ export default function LandingPage() {
   if (user) return <Navigate to="/dashboard" replace />
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-dvh flex-col bg-white">
       <Navbar />
       <Hero />
       <ValueProps />
