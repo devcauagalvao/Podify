@@ -19,8 +19,8 @@ function FooterRow({ label, children }: { label: string; children: ReactNode }) 
 
 export function Footer() {
   return (
-    <footer className="bg-ink-900 px-6 pt-10 text-white">
-      <div className="mx-auto max-w-6xl">
+    <footer className="flex flex-1 flex-col bg-ink-900 px-6 pt-10 text-white">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="flex items-center justify-between border-b border-white/15 pb-5">
           <div className="flex items-center gap-2">
             <FootIcon />

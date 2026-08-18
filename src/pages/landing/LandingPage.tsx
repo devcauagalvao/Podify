@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { FootIcon } from '@/components/BrandMark'
@@ -14,6 +15,21 @@ export default function LandingPage() {
   const user = useAuthStore((s) => s.user)
   const loading = useAuthStore((s) => s.loading)
 
+  // Faz o body/html acompanhar o fundo escuro do rodapé da Landing, para que
+  // o overscroll/bounce do mobile (iOS/Android) não exponha uma faixa branca
+  // abaixo do rodapé. Restaura o fundo padrão ao sair da rota.
+  useEffect(() => {
+    const { style } = document.documentElement
+    const previousHtmlBg = style.backgroundColor
+    const previousBodyBg = document.body.style.backgroundColor
+    style.backgroundColor = '#0f1b2d'
+    document.body.style.backgroundColor = '#0f1b2d'
+    return () => {
+      style.backgroundColor = previousHtmlBg
+      document.body.style.backgroundColor = previousBodyBg
+    }
+  }, [])
+
   // Mesmo padrão de loading do ProtectedRoute — evita um flash da landing
   // antes da sessão terminar de carregar.
   if (loading) {
@@ -29,7 +45,7 @@ export default function LandingPage() {
   if (user) return <Navigate to="/dashboard" replace />
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="flex min-h-screen flex-col bg-white">
       <Navbar />
       <Hero />
       <ValueProps />
