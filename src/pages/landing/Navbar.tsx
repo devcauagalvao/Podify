@@ -126,7 +126,7 @@ export function Navbar() {
               </Link>
               <Link
                 to="/signup"
-                className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-brand-400 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 transition hover:shadow-md hover:shadow-brand-500/40"
+                className="group flex items-center gap-2 rounded-full bg-gradient-to-r from-brand-600 to-brand-400 px-5 py-2 text-sm font-semibold text-white shadow-sm shadow-brand-500/30 transition hover:scale-[1.02] hover:shadow-md hover:shadow-brand-500/40"
               >
                 Testar grátis
                 <ArrowRight size={16} className="transition group-hover:translate-x-0.5" />

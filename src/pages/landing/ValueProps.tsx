@@ -12,7 +12,7 @@ const VALUE_PROPS = [
 
 export function ValueProps() {
   return (
-    <section id="sobre" className="px-4 py-10 sm:px-6">
+    <section id="sobre" className="scroll-mt-24 px-4 py-10 sm:px-6">
       <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-gradient-to-br from-brand-800 to-brand-500 px-6 py-16 shadow-xl shadow-brand-900/10 sm:px-10 sm:py-20">
         <div
           aria-hidden

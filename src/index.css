@@ -6,6 +6,16 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   @apply bg-surface text-ink-900 antialiased;
   font-family: 'Inter', system-ui, sans-serif;

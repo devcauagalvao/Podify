@@ -99,7 +99,7 @@ export function Features() {
   const feature = FEATURES.find((f) => f.id === selecionado)!
 
   return (
-    <section id="funcionalidades" className="px-6 py-20">
+    <section id="funcionalidades" className="scroll-mt-24 px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <Reveal className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">

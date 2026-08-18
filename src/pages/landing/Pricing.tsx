@@ -17,7 +17,7 @@ const RECURSOS = [
 
 export function Pricing() {
   return (
-    <section id="planos" className="relative overflow-hidden bg-brand-50/60 px-6 py-20">
+    <section id="planos" className="scroll-mt-24 relative overflow-hidden bg-brand-50/60 px-6 py-20">
       <div
         aria-hidden
         className="pointer-events-none absolute left-1/2 top-0 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-brand-200/30 blur-3xl"
@@ -56,7 +56,10 @@ export function Pricing() {
           </div>
 
           <div className="px-8 pb-8">
-            <Link to="/signup" className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base">
+            <Link
+              to="/signup"
+              className="btn-brand flex w-full items-center justify-center gap-2 py-4 text-base transition hover:scale-[1.02]"
+            >
               <Sparkles size={18} /> Começar grátis por 7 dias
             </Link>
             <p className="mt-3 text-center text-xs text-slate-400">Sem compromisso. Cancele quando quiser.</p>

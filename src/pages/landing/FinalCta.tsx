@@ -30,7 +30,7 @@ export function FinalCta() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/signup"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-brand-700 shadow-md transition hover:-translate-y-0.5 hover:bg-white/90 sm:w-auto"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-white px-8 py-4 text-base font-bold text-brand-700 shadow-md transition hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-white/90 sm:w-auto"
             >
               <Sparkles size={18} /> Criar conta grátis agora
             </Link>

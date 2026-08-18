@@ -46,7 +46,7 @@ export function Hero() {
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/signup"
-              className="btn-brand flex w-full items-center justify-center gap-2 px-8 py-4 text-base transition hover:-translate-y-0.5 sm:w-auto"
+              className="btn-brand flex w-full items-center justify-center gap-2 px-8 py-4 text-base transition hover:-translate-y-0.5 hover:scale-[1.02] sm:w-auto"
             >
               <Sparkles size={18} /> Começar 7 dias grátis
             </Link>

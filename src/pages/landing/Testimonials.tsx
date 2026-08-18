@@ -14,7 +14,7 @@ export function Testimonials() {
   if (!SHOW_TESTIMONIALS) return null
 
   return (
-    <section id="depoimentos" className="px-6 py-20">
+    <section id="depoimentos" className="scroll-mt-24 px-6 py-20">
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-4 py-1.5 text-xs font-semibold text-brand-700">
