@@ -126,7 +126,7 @@ export default function Login() {
         rel="noopener noreferrer"
         className="mt-1 flex items-center justify-center opacity-90 transition hover:opacity-60"
       >
-        <img src={glvLogo} alt="GLV Tecnologia" className="h-10 w-auto object-contain" />
+        <img src={glvLogo} alt="GLV Tecnologia" className="h-20 w-auto object-contain" />
       </a>
     </AuthCard>
   )
