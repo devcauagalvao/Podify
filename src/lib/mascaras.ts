@@ -46,3 +46,22 @@ export function mascaraValidadeCartao(v: string) {
 export function mascaraCvv(v: string) {
   return somenteDigitos(v).slice(0, 4)
 }
+
+/** Só dígitos, até 3 caracteres — usado em campos como idade. */
+export function mascaraIdade(v: string) {
+  return somenteDigitos(v).slice(0, 3)
+}
+
+/** Só dígitos, até 2 caracteres — numeração de calçado (Brasil vai até ~48). */
+export function mascaraNumeroCalcado(v: string) {
+  return somenteDigitos(v).slice(0, 2)
+}
+
+/** Número de endereço: dígitos, com no máximo 1 letra no final (ex: "123A"),
+ * pra cobrir casos reais como "123 fundos" viraria "123" e "12B" continua "12B". */
+export function mascaraNumeroEndereco(v: string) {
+  const limpo = v.replace(/[^0-9A-Za-z]/g, '')
+  const match = limpo.match(/^(\d*)([A-Za-z]?)/)
+  if (!match) return ''
+  return match[1] + match[2].toUpperCase()
+}

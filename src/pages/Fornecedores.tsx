@@ -7,6 +7,9 @@ import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
 import { SkeletonList } from '@/components/Skeleton'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
+import { mascaraTelefone } from '@/lib/mascaras'
+import { validarEmail } from '@/lib/validacoes'
 import type { Fornecedor } from '@/types/database'
 
 export default function Fornecedores() {
@@ -99,12 +102,18 @@ function NovoFornecedorModal({
 }) {
   const [form, setForm] = useState({ nome_empresa: '', nome_contato: '', telefone: '', email: '', observacoes: '' })
   const [saving, setSaving] = useState(false)
+  const [erros, setErros] = useState<Partial<Record<keyof typeof form, string>>>({})
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
 
   function updateForm(patch: Partial<typeof form>) {
     markDirty()
     setForm((f) => ({ ...f, ...patch }))
+    setErros((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(patch)) delete next[k as keyof typeof form]
+      return next
+    })
   }
 
   function handleClose() {
@@ -113,7 +122,13 @@ function NovoFornecedorModal({
   }
 
   async function salvar() {
-    if (!form.nome_empresa.trim()) return
+    const novosErros: Partial<Record<keyof typeof form, string>> = {}
+    if (!form.nome_empresa.trim()) novosErros.nome_empresa = 'Este campo é obrigatório.'
+    if (form.email && !validarEmail(form.email)) novosErros.email = 'E-mail inválido.'
+    if (Object.keys(novosErros).length > 0) {
+      setErros(novosErros)
+      return
+    }
     setSaving(true)
     const { error } = await supabase.from('fornecedores').insert({
       owner_id: ownerId,
@@ -139,11 +154,12 @@ function NovoFornecedorModal({
         <div>
           <label className="label-field">Nome da Empresa *</label>
           <input
-            className="input-field"
+            className={inputErrorClass(erros.nome_empresa)}
             value={form.nome_empresa}
             onChange={(e) => updateForm({ nome_empresa: e.target.value })}
             placeholder="Nome da empresa"
           />
+          <FieldError>{erros.nome_empresa}</FieldError>
         </div>
         <div>
           <label className="label-field">Nome do Contato</label>
@@ -160,18 +176,21 @@ function NovoFornecedorModal({
             <input
               className="input-field"
               value={form.telefone}
-              onChange={(e) => updateForm({ telefone: e.target.value })}
+              onChange={(e) => updateForm({ telefone: mascaraTelefone(e.target.value) })}
               placeholder="(00) 00000-0000"
+              inputMode="numeric"
             />
           </div>
           <div>
             <label className="label-field">E-mail</label>
             <input
-              className="input-field"
+              type="email"
+              className={inputErrorClass(erros.email)}
               value={form.email}
               onChange={(e) => updateForm({ email: e.target.value })}
               placeholder="email@empresa.com"
             />
+            <FieldError>{erros.email}</FieldError>
           </div>
         </div>
         <div>

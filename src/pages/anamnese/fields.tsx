@@ -1,4 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import { Check } from 'lucide-react'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -14,14 +16,18 @@ export function Section({ title, children }: { title: string; children: ReactNod
 export function Field({
   label,
   full,
+  animate,
   children,
 }: {
   label: string
   full?: boolean
+  /** Fade suave ao aparecer — usado em campos condicionais que só surgem
+   * conforme uma resposta anterior (ex: "Sim" numa pergunta-mãe). */
+  animate?: boolean
   children: ReactNode
 }) {
   return (
-    <div className={full ? 'sm:col-span-2 lg:col-span-3' : ''}>
+    <div className={`${full ? 'sm:col-span-2 lg:col-span-3' : ''} ${animate ? 'animate-field-fade-in' : ''}`.trim()}>
       <label className="label-field">{label}</label>
       {children}
     </div>
@@ -33,20 +39,25 @@ export function TextInput({
   onChange,
   placeholder,
   type = 'text',
+  error,
 }: {
   value: string
   onChange: (v: string) => void
   placeholder?: string
   type?: string
+  error?: string
 }) {
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="input-field"
-    />
+    <>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className={inputErrorClass(error)}
+      />
+      <FieldError>{error}</FieldError>
+    </>
   )
 }
 
@@ -195,11 +206,11 @@ export function CheckPill({
       className="flex min-h-[44px] items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm hover:bg-slate-50"
     >
       <span
-        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2 ${
+        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 ${
           checked ? 'border-brand-500 bg-brand-500' : 'border-slate-300'
         }`}
       >
-        {checked && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+        {checked && <Check size={11} strokeWidth={3} className="text-white" />}
       </span>
       <span className="text-slate-700">{label}</span>
     </button>

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Users, CalendarCheck, DollarSign, AlertTriangle, Footprints, Coffee, UserPlus, ClipboardPlus, CalendarPlus, Bot } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
+import { Users, CalendarCheck, DollarSign, AlertTriangle, Footprints, Coffee, UserPlus, ClipboardPlus, Bot, Truck } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { toastError } from '@/store/toastStore'
@@ -18,48 +18,78 @@ export default function Dashboard() {
   const [stats, setStats] = useState({
     clientes: 0,
     consultasHoje: 0,
+    consultasProximos7Dias: 0,
     receitaMes: 0,
     alertaEstoque: 0,
   })
   const [loading, setLoading] = useState(true)
+  const location = useLocation()
 
-  useEffect(() => {
-    async function load() {
-      const hoje = new Date().toISOString().slice(0, 10)
-      const inicioMes = new Date()
-      inicioMes.setDate(1)
+  const load = useCallback(async () => {
+    const hoje = new Date()
+    const hojeStr = hoje.toISOString().slice(0, 10)
+    const amanha = new Date(hoje)
+    amanha.setDate(amanha.getDate() + 1)
+    const em7Dias = new Date(hoje)
+    em7Dias.setDate(em7Dias.getDate() + 7)
+    const inicioMes = new Date()
+    inicioMes.setDate(1)
 
-      const [clientesRes, consultasRes, financeiroRes, estoqueRes] = await Promise.all([
-        supabase.from('clientes').select('id', { count: 'exact', head: true }).is('deleted_at', null),
-        supabase.from('consultas').select('id', { count: 'exact', head: true }).eq('data', hoje),
-        supabase
-          .from('financeiro_registros')
-          .select('valor, tipo')
-          .gte('data', inicioMes.toISOString().slice(0, 10)),
-        supabase.from('estoque_produtos').select('id, quantidade, quantidade_minima'),
-      ])
+    const [clientesRes, consultasRes, consultasProximosRes, financeiroRes, estoqueRes] = await Promise.all([
+      supabase.from('clientes').select('id', { count: 'exact', head: true }).is('deleted_at', null),
+      supabase.from('consultas').select('id', { count: 'exact', head: true }).eq('data', hojeStr),
+      // Próximos 7 dias a partir de amanhã — não repete a contagem de "hoje"
+      // que já aparece no header, mostra informação nova no card.
+      supabase
+        .from('consultas')
+        .select('id', { count: 'exact', head: true })
+        .gte('data', amanha.toISOString().slice(0, 10))
+        .lte('data', em7Dias.toISOString().slice(0, 10)),
+      supabase
+        .from('financeiro_registros')
+        .select('valor, tipo')
+        .gte('data', inicioMes.toISOString().slice(0, 10)),
+      supabase.from('estoque_produtos').select('id, quantidade, quantidade_minima'),
+    ])
 
-      const erro = clientesRes.error || consultasRes.error || financeiroRes.error || estoqueRes.error
-      if (erro) toastError(`Não foi possível carregar os dados do painel: ${erro.message}`)
+    const erro =
+      clientesRes.error || consultasRes.error || consultasProximosRes.error || financeiroRes.error || estoqueRes.error
+    if (erro) toastError(`Não foi possível carregar os dados do painel: ${erro.message}`)
 
-      const receitaMes = (financeiroRes.data ?? [])
-        .filter((r) => r.tipo === 'entrada')
-        .reduce((sum, r) => sum + Number(r.valor), 0)
+    const receitaMes = (financeiroRes.data ?? [])
+      .filter((r) => r.tipo === 'entrada')
+      .reduce((sum, r) => sum + Number(r.valor), 0)
 
-      const alertaEstoque = (estoqueRes.data ?? []).filter(
-        (p) => p.quantidade <= p.quantidade_minima
-      ).length
+    const alertaEstoque = (estoqueRes.data ?? []).filter(
+      (p) => p.quantidade <= p.quantidade_minima
+    ).length
 
-      setStats({
-        clientes: clientesRes.count ?? 0,
-        consultasHoje: consultasRes.count ?? 0,
-        receitaMes,
-        alertaEstoque,
-      })
-      setLoading(false)
-    }
-    load()
+    setStats({
+      clientes: clientesRes.count ?? 0,
+      consultasHoje: consultasRes.count ?? 0,
+      consultasProximos7Dias: consultasProximosRes.count ?? 0,
+      receitaMes,
+      alertaEstoque,
+    })
+    setLoading(false)
   }, [])
+
+  // location.key muda a cada navegação — mesmo voltando pra /dashboard
+  // depois de cadastrar algo em outra tela — então refaz a busca sempre
+  // que o usuário revisita o painel, em vez de confiar só no mount inicial.
+  useEffect(() => {
+    load()
+  }, [load, location.key])
+
+  // Cobre o caso de o usuário deixar a aba aberta em /dashboard e voltar
+  // pra ela depois de cadastrar algo em outra aba/janela.
+  useEffect(() => {
+    function onFocus() {
+      load()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [load])
 
   const nome = profile?.nome_completo?.split(' ')[0] ?? profile?.nome_clinica ?? ''
 
@@ -110,16 +140,31 @@ export default function Dashboard() {
         <SkeletonStatCards count={4} className="grid-cols-2 gap-4 lg:grid-cols-4" />
       ) : (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          <StatCard icon={Users} label="Clientes" sub="cadastrados" value={stats.clientes} tone="brand" />
-          <StatCard icon={CalendarCheck} label="Consultas Hoje" sub="agendadas" value={stats.consultasHoje} tone="brand" />
+          <StatCard icon={Users} label="Clientes" sub="cadastrados" value={stats.clientes} tone="brand" to="/clientes" />
+          <StatCard
+            icon={CalendarCheck}
+            label="Próximos 7 Dias"
+            sub="consultas agendadas"
+            value={stats.consultasProximos7Dias}
+            tone="brand"
+            to="/agenda"
+          />
           <StatCard
             icon={DollarSign}
             label="Receita do Mês"
             sub={new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())}
             value={stats.receitaMes.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             tone="brand-dark"
+            to="/financeiro"
           />
-          <StatCard icon={AlertTriangle} label="Alerta de Estoque" sub="itens baixos" value={stats.alertaEstoque} tone="danger" />
+          <StatCard
+            icon={AlertTriangle}
+            label="Alerta de Estoque"
+            sub="itens baixos"
+            value={stats.alertaEstoque}
+            tone="danger"
+            to="/estoque"
+          />
         </div>
       )}
 
@@ -164,7 +209,7 @@ export default function Dashboard() {
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <QuickAccess icon={UserPlus} title="Novo Cliente" sub="Cadastrar" to="/clientes" />
           <QuickAccess icon={ClipboardPlus} title="Nova Ficha" sub="Anamnese" to="/anamnese/nova" />
-          <QuickAccess icon={CalendarPlus} title="Agendar" sub="Consulta" to="/agenda" />
+          <QuickAccess icon={Truck} title="Fornecedores" sub="Ver todos" to="/fornecedores" />
           <QuickAccess icon={Bot} title="LIA Podóloga" sub="Consultar IA" to="/lia" />
         </div>
       </div>
@@ -194,23 +239,33 @@ function StatCard({
   sub,
   value,
   tone,
+  to,
 }: {
   icon: typeof Users
   label: string
   sub: string
   value: string | number
   tone: 'brand' | 'brand-dark' | 'danger'
+  to: string
 }) {
   const bg = tone === 'danger' ? 'bg-rose-500' : tone === 'brand-dark' ? 'bg-brand-700' : 'bg-brand-400'
+  // Valores em R$ com muitos dígitos (ex: "R$ 123.456.789,00") não cabem no
+  // tamanho de fonte padrão do card — reduz progressivamente conforme o
+  // texto formatado fica mais longo, em vez de vazar ou quebrar o layout.
+  const valorTexto = String(value)
+  const fonteClasse =
+    valorTexto.length > 16 ? 'text-base' : valorTexto.length > 12 ? 'text-lg' : 'text-2xl'
   return (
-    <div className="card p-5">
+    <Link to={to} className="card block p-5 transition hover:-translate-y-0.5 hover:shadow-md">
       <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${bg} text-white`}>
         <Icon size={18} />
       </div>
-      <p className="text-2xl font-extrabold text-ink-900">{value}</p>
+      <p className={`truncate font-extrabold text-ink-900 ${fonteClasse}`} title={valorTexto}>
+        {value}
+      </p>
       <p className="text-sm font-medium text-slate-600">{label}</p>
       <p className="text-xs text-slate-400">{sub}</p>
-    </div>
+    </Link>
   )
 }
 

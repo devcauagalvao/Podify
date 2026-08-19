@@ -30,6 +30,7 @@ import {
   mascaraValidadeCartao,
   mascaraCvv,
 } from '@/lib/mascaras'
+import { erroCpfCnpj } from '@/lib/validacoes'
 
 const RECURSOS = [
   'Clientes ilimitados',
@@ -559,6 +560,11 @@ function CheckoutModal({ onClose }: { onClose: () => void }) {
 
     if (!nome.trim() || !cpfCnpj.trim()) {
       setErro('Preencha nome e CPF/CNPJ.')
+      return
+    }
+    const erroCpf = erroCpfCnpj(cpfCnpj)
+    if (erroCpf) {
+      setErro(erroCpf)
       return
     }
     if (formaPagamento === 'CREDIT_CARD') {

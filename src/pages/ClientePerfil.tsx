@@ -26,7 +26,9 @@ import { ConfirmarExclusaoModal } from '@/components/ConfirmarExclusaoModal'
 import { Skeleton, SkeletonListRow } from '@/components/Skeleton'
 import { BirthDateInput } from '@/pages/anamnese/fields'
 import { excluirClienteComCascata } from '@/lib/clientesLixeira'
-import { mascaraCpfCnpj } from '@/lib/mascaras'
+import { mascaraCpfCnpj, mascaraTelefone, mascaraNumeroEndereco } from '@/lib/mascaras'
+import { erroCpfCnpj } from '@/lib/validacoes'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
 import { ESTADOS_BRASIL } from '@/lib/estadosBrasil'
 import type { Cliente, Anamnese, Consulta } from '@/types/database'
 
@@ -173,7 +175,7 @@ export default function ClientePerfil() {
           <DadoItem icon={Mail} label="Email" value={cliente.email} />
           <DadoItem icon={Cake} label="Data de Nascimento" value={formatDataBR(cliente.data_nascimento)} />
           <DadoItem icon={IdCard} label="CPF" value={cliente.cpf} />
-          <DadoItem icon={MapPin} label="Endereço" value={formatEndereco(cliente)} />
+          <DadoItem icon={MapPin} label="Endereço" value={formatEndereco(cliente)} wrap />
           <DadoItem icon={Contact} label="Contato de Emergência" value={cliente.contato_emergencia} />
         </div>
         {cliente.observacoes && (
@@ -309,10 +311,14 @@ function DadoItem({
   icon: Icon,
   label,
   value,
+  wrap,
 }: {
   icon: typeof Phone
   label: string
   value: string | null | undefined
+  /** Quebra o texto dentro do card em vez de truncar em uma linha só —
+   * usado no Endereço, que pode ficar bem mais longo que os outros campos. */
+  wrap?: boolean
 }) {
   return (
     <div className="flex items-start gap-3">
@@ -321,7 +327,7 @@ function DadoItem({
       </div>
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-400">{label}</p>
-        <p className="truncate text-sm font-medium text-ink-900">{value || '—'}</p>
+        <p className={`text-sm font-medium text-ink-900 ${wrap ? 'break-words' : 'truncate'}`}>{value || '—'}</p>
       </div>
     </div>
   )
@@ -351,12 +357,18 @@ function EditarClienteModal({
     estado: cliente.estado ?? '',
   })
   const [saving, setSaving] = useState(false)
+  const [erros, setErros] = useState<Partial<Record<keyof typeof form, string>>>({})
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
 
   function updateForm(patch: Partial<typeof form>) {
     markDirty()
     setForm((f) => ({ ...f, ...patch }))
+    setErros((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(patch)) delete next[k as keyof typeof form]
+      return next
+    })
   }
 
   function handleClose() {
@@ -365,7 +377,15 @@ function EditarClienteModal({
   }
 
   async function salvar() {
-    if (!form.nome.trim()) return
+    if (!form.nome.trim()) {
+      setErros((prev) => ({ ...prev, nome: 'Este campo é obrigatório.' }))
+      return
+    }
+    const erroCpf = erroCpfCnpj(form.cpf)
+    if (erroCpf) {
+      toastError(erroCpf)
+      return
+    }
     setSaving(true)
     const { data, error } = await supabase
       .from('clientes')
@@ -402,11 +422,12 @@ function EditarClienteModal({
         <div>
           <label className="label-field">Nome *</label>
           <input
-            className="input-field"
+            className={inputErrorClass(erros.nome)}
             value={form.nome}
             onChange={(e) => updateForm({ nome: e.target.value })}
             placeholder="Nome completo"
           />
+          <FieldError>{erros.nome}</FieldError>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -414,8 +435,9 @@ function EditarClienteModal({
             <input
               className="input-field"
               value={form.telefone}
-              onChange={(e) => updateForm({ telefone: e.target.value })}
+              onChange={(e) => updateForm({ telefone: mascaraTelefone(e.target.value) })}
               placeholder="(00) 00000-0000"
+              inputMode="numeric"
             />
           </div>
           <div>
@@ -469,7 +491,7 @@ function EditarClienteModal({
               <input
                 className="input-field"
                 value={form.numero}
-                onChange={(e) => updateForm({ numero: e.target.value })}
+                onChange={(e) => updateForm({ numero: mascaraNumeroEndereco(e.target.value) })}
               />
             </div>
           </div>

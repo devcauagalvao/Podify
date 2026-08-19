@@ -8,6 +8,8 @@ import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
 import { ConfirmarExclusaoModal } from '@/components/ConfirmarExclusaoModal'
 import { Skeleton, SkeletonStatCards } from '@/components/Skeleton'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
+import { dbErrorMessage } from '@/lib/dbErrors'
 import type { FinanceiroPdfData } from './FinanceiroPdfDocument'
 import type { Cliente, FinanceiroRegistro } from '@/types/database'
 
@@ -31,6 +33,8 @@ const CATEGORIAS_ORDEM = ['consulta', 'material', 'produto', 'outro']
 
 const ANO_ATUAL = new Date().getFullYear()
 const ANOS = Array.from({ length: 7 }, (_, i) => ANO_ATUAL - i)
+
+const VALOR_MAXIMO = 9999999.99
 
 function fmtISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -131,7 +135,7 @@ export default function Financeiro() {
       .select(REGISTRO_COM_CLIENTE_SELECT)
       .gte('data', desde.toISOString().slice(0, 10))
       .order('data', { ascending: false })
-    if (error) toastError(`Não foi possível carregar os registros financeiros: ${error.message}`)
+    if (error) toastError(dbErrorMessage(error, 'Não foi possível carregar os registros financeiros. Tente novamente.'))
     setRegistros((data as RegistroComCliente[] | null) ?? [])
     setLoading(false)
   }
@@ -148,7 +152,7 @@ export default function Financeiro() {
       .is('deleted_at', null)
       .order('nome')
       .then(({ data, error }) => {
-        if (error) toastError(`Não foi possível carregar os clientes: ${error.message}`)
+        if (error) toastError(dbErrorMessage(error, 'Não foi possível carregar os clientes. Tente novamente.'))
         setClientes(data ?? [])
       })
   }, [])
@@ -164,7 +168,7 @@ export default function Financeiro() {
       .order('data', { ascending: true })
       .then(({ data, error }) => {
         if (cancelled) return
-        if (error) toastError(`Não foi possível carregar o extrato: ${error.message}`)
+        if (error) toastError(dbErrorMessage(error, 'Não foi possível carregar o extrato. Tente novamente.'))
         setExtratoRegistros((data as RegistroComCliente[] | null) ?? [])
         setExtratoLoading(false)
       })
@@ -183,7 +187,7 @@ export default function Financeiro() {
       .eq('owner_id', user.id)
     setExcluindo(false)
     if (error) {
-      toastError(`Não foi possível excluir o registro: ${error.message}`)
+      toastError(dbErrorMessage(error, 'Não foi possível excluir o registro. Tente novamente.'))
       return
     }
     setRegistros((prev) => prev.filter((r) => r.id !== excluirAlvo.id))
@@ -625,12 +629,18 @@ function NovoRegistroModal({
     status_pagamento: 'pago',
   })
   const [saving, setSaving] = useState(false)
+  const [erros, setErros] = useState<Partial<Record<keyof typeof form, string>>>({})
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
 
   function updateForm(patch: Partial<typeof form>) {
     markDirty()
     setForm((f) => ({ ...f, ...patch }))
+    setErros((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(patch)) delete next[k as keyof typeof form]
+      return next
+    })
   }
 
   function handleClose() {
@@ -639,7 +649,22 @@ function NovoRegistroModal({
   }
 
   async function salvar() {
-    if (!form.valor) return
+    const novosErros: Partial<Record<keyof typeof form, string>> = {}
+    if (!form.valor) novosErros.valor = 'Este campo é obrigatório.'
+    if (!form.data) novosErros.data = 'Este campo é obrigatório.'
+    if (Object.keys(novosErros).length > 0) {
+      setErros(novosErros)
+      return
+    }
+    const valorNum = Number(form.valor)
+    if (!Number.isFinite(valorNum) || valorNum <= 0) {
+      toastError('Informe um valor válido.')
+      return
+    }
+    if (valorNum > VALOR_MAXIMO) {
+      toastError('Valor muito alto. Verifique se digitou corretamente.')
+      return
+    }
     setSaving(true)
     const { error } = await supabase.from('financeiro_registros').insert({
       owner_id: ownerId,
@@ -647,13 +672,13 @@ function NovoRegistroModal({
       categoria: form.categoria,
       cliente_id: form.clienteId || null,
       descricao: form.descricao || null,
-      valor: Number(form.valor),
+      valor: valorNum,
       data: form.data,
       status_pagamento: form.status_pagamento,
     })
     if (error) {
       setSaving(false)
-      toastError(`Não foi possível salvar o registro financeiro: ${error.message}`)
+      toastError(dbErrorMessage(error, 'Não foi possível salvar o registro financeiro. Tente novamente.'))
       return
     }
     markClean()
@@ -720,20 +745,23 @@ function NovoRegistroModal({
             <input
               type="number"
               step="0.01"
-              className="input-field"
+              max={VALOR_MAXIMO}
+              className={inputErrorClass(erros.valor)}
               value={form.valor}
               onChange={(e) => updateForm({ valor: e.target.value })}
               placeholder="0.00"
             />
+            <FieldError>{erros.valor}</FieldError>
           </div>
           <div>
             <label className="label-field">Data *</label>
             <input
               type="date"
-              className="input-field"
+              className={inputErrorClass(erros.data)}
               value={form.data}
               onChange={(e) => updateForm({ data: e.target.value })}
             />
+            <FieldError>{erros.data}</FieldError>
           </div>
         </div>
         <div>

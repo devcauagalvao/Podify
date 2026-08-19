@@ -7,6 +7,7 @@ import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
 import { SkeletonList } from '@/components/Skeleton'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
 import type { EstoqueProduto } from '@/types/database'
 
 export default function Estoque() {
@@ -114,12 +115,18 @@ function NovoProdutoModal({
 }) {
   const [form, setForm] = useState({ nome: '', categoria: '', qtd: '0', qtdMin: '5', preco: '' })
   const [saving, setSaving] = useState(false)
+  const [erros, setErros] = useState<Partial<Record<keyof typeof form, string>>>({})
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
 
   function updateForm(patch: Partial<typeof form>) {
     markDirty()
     setForm((f) => ({ ...f, ...patch }))
+    setErros((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(patch)) delete next[k as keyof typeof form]
+      return next
+    })
   }
 
   function handleClose() {
@@ -128,14 +135,27 @@ function NovoProdutoModal({
   }
 
   async function salvar() {
-    if (!form.nome.trim()) return
+    if (!form.nome.trim()) {
+      setErros((prev) => ({ ...prev, nome: 'Este campo é obrigatório.' }))
+      return
+    }
+    const qtdNum = Number(form.qtd)
+    if (!Number.isInteger(qtdNum)) {
+      toastError('Quantidade deve ser um número inteiro.')
+      return
+    }
+    const qtdMinNum = Number(form.qtdMin)
+    if (!Number.isInteger(qtdMinNum)) {
+      toastError('Quantidade mínima deve ser um número inteiro.')
+      return
+    }
     setSaving(true)
     const { error } = await supabase.from('estoque_produtos').insert({
       owner_id: ownerId,
       nome: form.nome,
       categoria: form.categoria || null,
-      quantidade: Number(form.qtd),
-      quantidade_minima: Number(form.qtdMin),
+      quantidade: qtdNum,
+      quantidade_minima: qtdMinNum,
       preco: form.preco ? Number(form.preco) : null,
     })
     if (error) {
@@ -154,11 +174,12 @@ function NovoProdutoModal({
         <div>
           <label className="label-field">Nome *</label>
           <input
-            className="input-field"
+            className={inputErrorClass(erros.nome)}
             value={form.nome}
             onChange={(e) => updateForm({ nome: e.target.value })}
             placeholder="Nome do produto"
           />
+          <FieldError>{erros.nome}</FieldError>
         </div>
         <div>
           <label className="label-field">Categoria</label>
@@ -174,6 +195,7 @@ function NovoProdutoModal({
             <label className="label-field">Qtd *</label>
             <input
               type="number"
+              step="1"
               className="input-field"
               value={form.qtd}
               onChange={(e) => updateForm({ qtd: e.target.value })}
@@ -183,6 +205,7 @@ function NovoProdutoModal({
             <label className="label-field">Qtd Mín.</label>
             <input
               type="number"
+              step="1"
               className="input-field"
               value={form.qtdMin}
               onChange={(e) => updateForm({ qtdMin: e.target.value })}

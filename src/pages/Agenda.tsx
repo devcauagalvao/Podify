@@ -7,6 +7,7 @@ import { useDirtyBeforeUnload } from '@/hooks/useDirtyBeforeUnload'
 import { useSavedFlash } from '@/hooks/useSavedFlash'
 import { Modal } from '@/components/layout/Modal'
 import { Skeleton, SkeletonCalendar } from '@/components/Skeleton'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
 import type { Cliente, Consulta } from '@/types/database'
 
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
@@ -209,12 +210,18 @@ function NovaConsultaModal({
 }) {
   const [form, setForm] = useState({ cliente_id: '', data: dataInicial, horario: '', observacoes: '' })
   const [saving, setSaving] = useState(false)
+  const [erros, setErros] = useState<Partial<Record<keyof typeof form, string>>>({})
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
 
   function updateForm(patch: Partial<typeof form>) {
     markDirty()
     setForm((f) => ({ ...f, ...patch }))
+    setErros((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(patch)) delete next[k as keyof typeof form]
+      return next
+    })
   }
 
   function handleClose() {
@@ -223,7 +230,14 @@ function NovaConsultaModal({
   }
 
   async function salvar() {
-    if (!form.cliente_id || !form.data || !form.horario) return
+    const novosErros: Partial<Record<keyof typeof form, string>> = {}
+    if (!form.cliente_id) novosErros.cliente_id = 'Este campo é obrigatório.'
+    if (!form.data) novosErros.data = 'Este campo é obrigatório.'
+    if (!form.horario) novosErros.horario = 'Este campo é obrigatório.'
+    if (Object.keys(novosErros).length > 0) {
+      setErros(novosErros)
+      return
+    }
     setSaving(true)
     const { error } = await supabase.from('consultas').insert({
       owner_id: ownerId,
@@ -248,7 +262,7 @@ function NovaConsultaModal({
         <div>
           <label className="label-field">Cliente *</label>
           <select
-            className="input-field"
+            className={inputErrorClass(erros.cliente_id)}
             value={form.cliente_id}
             onChange={(e) => updateForm({ cliente_id: e.target.value })}
           >
@@ -259,25 +273,28 @@ function NovaConsultaModal({
               </option>
             ))}
           </select>
+          <FieldError>{erros.cliente_id}</FieldError>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="label-field">Data *</label>
             <input
               type="date"
-              className="input-field"
+              className={inputErrorClass(erros.data)}
               value={form.data}
               onChange={(e) => updateForm({ data: e.target.value })}
             />
+            <FieldError>{erros.data}</FieldError>
           </div>
           <div>
             <label className="label-field">Horário *</label>
             <input
               type="time"
-              className="input-field"
+              className={inputErrorClass(erros.horario)}
               value={form.horario}
               onChange={(e) => updateForm({ horario: e.target.value })}
             />
+            <FieldError>{erros.horario}</FieldError>
           </div>
         </div>
         <div>

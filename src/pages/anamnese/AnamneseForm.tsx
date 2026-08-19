@@ -10,6 +10,8 @@ import { SignaturePad } from '@/components/SignaturePad'
 import { PhotoLightbox } from '@/components/PhotoLightbox'
 import { Skeleton, SkeletonSection } from '@/components/Skeleton'
 import { Section, Field, TextInput, SelectInput, SimNao, CheckPill, BirthDateInput } from './fields'
+import { mascaraTelefone, mascaraCep, mascaraIdade, mascaraNumeroCalcado } from '@/lib/mascaras'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
 import type { AnamnesePdfData } from './AnamnesePdfDocument'
 import type { Cliente } from '@/types/database'
 
@@ -27,6 +29,7 @@ const CONDICOES_PELE = [
 ]
 
 const FORMATOS_UNHA = ['A=Normal', 'B=Involuta', 'C=Telha', 'D=Funil', 'E=Gancho', 'F=Torquês', 'G=Caracol', 'H=Cunha']
+const OPCOES_FORMATO_UNHA = FORMATOS_UNHA.map((f) => f.replace('=', ' - '))
 
 const AUTOSAVE_INTERVAL_MS = 15000
 
@@ -69,6 +72,7 @@ export default function AnamneseForm() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [clienteId, setClienteId] = useState(params.get('cliente') ?? '')
   const [data, setData] = useState(new Date().toISOString().slice(0, 10))
+  const [erros, setErros] = useState<{ clienteId?: string; data?: string }>({})
   const [saving, setSaving] = useState(false)
   const [autosaving, setAutosaving] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
@@ -103,10 +107,12 @@ export default function AnamneseForm() {
   function setClienteIdDirty(v: string) {
     markDirty()
     setClienteId(v)
+    setErros((prev) => ({ ...prev, clienteId: undefined }))
   }
   function setDataDirty(v: string) {
     markDirty()
     setData(v)
+    setErros((prev) => ({ ...prev, data: undefined }))
   }
   function setProcedimentos(v: string) {
     markDirty()
@@ -279,8 +285,14 @@ export default function AnamneseForm() {
   }
 
   async function salvarFicha(opts: { statusFinal: 'em_andamento' | 'finalizada'; silent: boolean }) {
-    if (!clienteId) {
-      if (!opts.silent) toastError('Selecione o cliente antes de salvar.')
+    if (!clienteId || !data) {
+      if (!opts.silent) {
+        setErros({
+          clienteId: clienteId ? undefined : 'Este campo é obrigatório.',
+          data: data ? undefined : 'Este campo é obrigatório.',
+        })
+        toastError('Selecione o cliente antes de salvar.')
+      }
       return false
     }
 
@@ -366,6 +378,10 @@ export default function AnamneseForm() {
   }, [])
 
   async function salvar() {
+    if (!assinaturaClientePath || !assinaturaProfissionalPath) {
+      toastError('É necessário coletar as duas assinaturas antes de finalizar a ficha.')
+      return
+    }
     const ok = await salvarFicha({ statusFinal: 'finalizada', silent: false })
     if (ok) {
       toastSuccess('Ficha salva com sucesso!')
@@ -490,7 +506,7 @@ export default function AnamneseForm() {
           <select
             value={clienteId}
             onChange={(e) => setClienteIdDirty(e.target.value)}
-            className="input-field"
+            className={inputErrorClass(erros.clienteId)}
           >
             <option value="">Selecione</option>
             {clientes.map((c) => (
@@ -499,9 +515,10 @@ export default function AnamneseForm() {
               </option>
             ))}
           </select>
+          <FieldError>{erros.clienteId}</FieldError>
         </Field>
         <Field label="Data *">
-          <TextInput type="date" value={data} onChange={setDataDirty} />
+          <TextInput type="date" value={data} onChange={setDataDirty} error={erros.data} />
         </Field>
       </Section>
 
@@ -510,7 +527,7 @@ export default function AnamneseForm() {
           <BirthDateInput value={dadosPessoais.dataNascimento ?? ''} onChange={(v) => setDP('dataNascimento', v)} />
         </Field>
         <Field label="Idade">
-          <TextInput value={dadosPessoais.idade ?? ''} onChange={(v) => setDP('idade', v)} placeholder="Anos" />
+          <TextInput value={dadosPessoais.idade ?? ''} onChange={(v) => setDP('idade', mascaraIdade(v))} placeholder="Anos" />
         </Field>
         <Field label="Gênero">
           <SelectInput value={dadosPessoais.genero ?? ''} onChange={(v) => setDP('genero', v)} options={['Feminino', 'Masculino', 'Outro']} />
@@ -519,16 +536,20 @@ export default function AnamneseForm() {
           <TextInput value={dadosPessoais.profissao ?? ''} onChange={(v) => setDP('profissao', v)} />
         </Field>
         <Field label="Estado Civil">
-          <TextInput value={dadosPessoais.estadoCivil ?? ''} onChange={(v) => setDP('estadoCivil', v)} />
+          <SelectInput
+            value={dadosPessoais.estadoCivil ?? ''}
+            onChange={(v) => setDP('estadoCivil', v)}
+            options={['Solteiro(a)', 'Casado(a)', 'Divorciado(a)', 'Viúvo(a)', 'União Estável']}
+          />
         </Field>
         <Field label="Celular">
-          <TextInput value={dadosPessoais.celular ?? ''} onChange={(v) => setDP('celular', v)} placeholder="(00) 00000-0000" />
+          <TextInput value={dadosPessoais.celular ?? ''} onChange={(v) => setDP('celular', mascaraTelefone(v))} placeholder="(00) 00000-0000" />
         </Field>
         <Field label="Endereço" full>
           <TextInput value={dadosPessoais.endereco ?? ''} onChange={(v) => setDP('endereco', v)} placeholder="Rua, número, Bairro, Cidade - UF" />
         </Field>
         <Field label="CEP">
-          <TextInput value={dadosPessoais.cep ?? ''} onChange={(v) => setDP('cep', v)} placeholder="00000-000" />
+          <TextInput value={dadosPessoais.cep ?? ''} onChange={(v) => setDP('cep', mascaraCep(v))} placeholder="00000-000" />
         </Field>
       </Section>
 
@@ -555,7 +576,7 @@ export default function AnamneseForm() {
           <SelectInput value={dadosGerais.maiorParteTempo ?? ''} onChange={(v) => setDG('maiorParteTempo', v)} options={['Em pé', 'Sentado', 'Caminhando']} />
         </Field>
         <Field label="Nº do Calçado">
-          <TextInput value={dadosGerais.numeroCalcado ?? ''} onChange={(v) => setDG('numeroCalcado', v)} placeholder="Ex: 38" />
+          <TextInput value={dadosGerais.numeroCalcado ?? ''} onChange={(v) => setDG('numeroCalcado', mascaraNumeroCalcado(v))} placeholder="Ex: 38" />
         </Field>
         <Field label="Tipo de Calçado Diário">
           <TextInput value={dadosGerais.tipoCalcadoDiario ?? ''} onChange={(v) => setDG('tipoCalcadoDiario', v)} />
@@ -563,9 +584,11 @@ export default function AnamneseForm() {
         <Field label="Alérgico(a)?">
           <SimNao value={dadosGerais.alergico ?? ''} onChange={(v) => setDG('alergico', v)} />
         </Field>
-        <Field label="Substâncias Alérgicas">
-          <TextInput value={dadosGerais.substanciasAlergicas ?? ''} onChange={(v) => setDG('substanciasAlergicas', v)} />
-        </Field>
+        {dadosGerais.alergico === 'Sim' && (
+          <Field label="Substâncias Alérgicas" animate>
+            <TextInput value={dadosGerais.substanciasAlergicas ?? ''} onChange={(v) => setDG('substanciasAlergicas', v)} />
+          </Field>
+        )}
         <Field label="Usa Palmilha?">
           <SimNao value={dadosGerais.usaPalmilha ?? ''} onChange={(v) => setDG('usaPalmilha', v)} />
         </Field>
@@ -578,7 +601,7 @@ export default function AnamneseForm() {
         <Field label="Ciclo Menstrual Regular?">
           <SimNao value={dadosGerais.cicloMenstrual ?? ''} onChange={(v) => setDG('cicloMenstrual', v)} />
         </Field>
-        <Field label="DUM">
+        <Field label="Última Menstruação (DUM)">
           <TextInput type="date" value={dadosGerais.dum ?? ''} onChange={(v) => setDG('dum', v)} />
         </Field>
         <Field label="Gestante?">
@@ -590,12 +613,16 @@ export default function AnamneseForm() {
         <Field label="Pratica Atividade Física?">
           <SimNao value={dadosGerais.praticaAtividade ?? ''} onChange={(v) => setDG('praticaAtividade', v)} />
         </Field>
-        <Field label="Frequência">
-          <TextInput value={dadosGerais.frequenciaAtividade ?? ''} onChange={(v) => setDG('frequenciaAtividade', v)} />
-        </Field>
-        <Field label="Esporte e tipo de calçado">
-          <TextInput value={dadosGerais.esporteTipoCalcado ?? ''} onChange={(v) => setDG('esporteTipoCalcado', v)} />
-        </Field>
+        {dadosGerais.praticaAtividade === 'Sim' && (
+          <>
+            <Field label="Frequência" animate>
+              <TextInput value={dadosGerais.frequenciaAtividade ?? ''} onChange={(v) => setDG('frequenciaAtividade', v)} />
+            </Field>
+            <Field label="Esporte e tipo de calçado" animate>
+              <TextInput value={dadosGerais.esporteTipoCalcado ?? ''} onChange={(v) => setDG('esporteTipoCalcado', v)} />
+            </Field>
+          </>
+        )}
       </Section>
 
       <Section title="DADOS CLÍNICOS">
@@ -623,23 +650,27 @@ export default function AnamneseForm() {
         <Field label="Pré-Diabetes?">
           <SimNao value={dadosClinicos.preDiabetes ?? ''} onChange={(v) => setDC('preDiabetes', v)} />
         </Field>
-        <Field label="Taxa Glicêmica">
-          <TextInput value={dadosClinicos.taxaGlicemica ?? ''} onChange={(v) => setDC('taxaGlicemica', v)} />
-        </Field>
-        <Field label="Medicamento p/ Diabetes?">
-          <SimNao value={dadosClinicos.medicamentoDiabetes ?? ''} onChange={(v) => setDC('medicamentoDiabetes', v)} />
-        </Field>
-        <Field label="Tipo de medicamento">
-          <SelectInput value={dadosClinicos.tipoMedicamento ?? ''} onChange={(v) => setDC('tipoMedicamento', v)} options={['Injetável', 'Via Oral']} />
-        </Field>
+        {(dadosClinicos.diabetes === 'Sim' || dadosClinicos.preDiabetes === 'Sim') && (
+          <>
+            <Field label="Taxa Glicêmica" animate>
+              <TextInput value={dadosClinicos.taxaGlicemica ?? ''} onChange={(v) => setDC('taxaGlicemica', v)} />
+            </Field>
+            <Field label="Medicamento p/ Diabetes?" animate>
+              <SimNao value={dadosClinicos.medicamentoDiabetes ?? ''} onChange={(v) => setDC('medicamentoDiabetes', v)} />
+            </Field>
+            <Field label="Tipo de medicamento" animate>
+              <SelectInput value={dadosClinicos.tipoMedicamento ?? ''} onChange={(v) => setDC('tipoMedicamento', v)} options={['Injetável', 'Via Oral']} />
+            </Field>
+            <Field label="Data da Última Verificação Glicêmica" animate>
+              <TextInput type="date" value={dadosClinicos.dataUltimaVerificacao ?? ''} onChange={(v) => setDC('dataUltimaVerificacao', v)} />
+            </Field>
+          </>
+        )}
         <Field label="Dieta Hídrica?">
           <SimNao value={dadosClinicos.dietaHidrica ?? ''} onChange={(v) => setDC('dietaHidrica', v)} />
         </Field>
         <Field label="Dieta Alimentar">
           <TextInput value={dadosClinicos.dietaAlimentar ?? ''} onChange={(v) => setDC('dietaAlimentar', v)} />
-        </Field>
-        <Field label="Data da Última Verificação Glicêmica">
-          <TextInput type="date" value={dadosClinicos.dataUltimaVerificacao ?? ''} onChange={(v) => setDC('dataUltimaVerificacao', v)} />
         </Field>
       </Section>
 
@@ -650,9 +681,11 @@ export default function AnamneseForm() {
         <Field label="Tipo de Marcha">
           <SelectInput value={alteracoesLesoes.tipoMarcha ?? ''} onChange={(v) => setAL('tipoMarcha', v)} options={['Normal', 'Patológica']} />
         </Field>
-        <Field label="Marcha Patológica — Qual?">
-          <TextInput value={alteracoesLesoes.marchaPatologica ?? ''} onChange={(v) => setAL('marchaPatologica', v)} />
-        </Field>
+        {alteracoesLesoes.tipoMarcha === 'Patológica' && (
+          <Field label="Marcha Patológica — Qual?" animate>
+            <TextInput value={alteracoesLesoes.marchaPatologica ?? ''} onChange={(v) => setAL('marchaPatologica', v)} />
+          </Field>
+        )}
         <Field label="Joelho">
           <SelectInput value={alteracoesLesoes.joelho ?? ''} onChange={(v) => setAL('joelho', v)} options={['Normal', 'Varo', 'Valgo']} />
         </Field>
@@ -689,7 +722,7 @@ export default function AnamneseForm() {
       <Section title={`FORMATO DAS UNHAS (${FORMATOS_UNHA.join(' ')})`}>
         {['pdHalux', 'pd2', 'pd3', 'pd4', 'pd5', 'peHalux', 'pe2', 'pe3', 'pe4', 'pe5'].map((k, i) => (
           <Field key={k} label={`${k.startsWith('pd') ? 'PD' : 'PE'} ${i % 5 === 0 ? 'Hálux' : (i % 5) + 1 + 'º'}`}>
-            <SelectInput value={formatoUnhas[k] ?? ''} onChange={(v) => setFU(k, v)} options={['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']} />
+            <SelectInput value={formatoUnhas[k] ?? ''} onChange={(v) => setFU(k, v)} options={OPCOES_FORMATO_UNHA} />
           </Field>
         ))}
         <Field label="Outras Alterações da Lâmina Ungueal" full>

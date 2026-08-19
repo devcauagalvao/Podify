@@ -15,8 +15,10 @@ import {
   formatarExcluidoHa,
   diasRestantesParaExpurgo,
 } from '@/lib/clientesLixeira'
-import { mascaraCpfCnpj } from '@/lib/mascaras'
+import { mascaraCpfCnpj, mascaraTelefone, mascaraNumeroEndereco } from '@/lib/mascaras'
+import { erroCpfCnpj } from '@/lib/validacoes'
 import { ESTADOS_BRASIL } from '@/lib/estadosBrasil'
+import { FieldError, inputErrorClass } from '@/components/FieldError'
 import type { Cliente } from '@/types/database'
 
 export default function Clientes() {
@@ -297,12 +299,18 @@ function NovoClienteModal({
     estado: '',
   })
   const [saving, setSaving] = useState(false)
+  const [erros, setErros] = useState<Partial<Record<keyof typeof form, string>>>({})
   const { markDirty, markClean, confirmDiscard } = useDirtyBeforeUnload()
   const { justSaved, flashThen } = useSavedFlash()
 
   function updateForm(patch: Partial<typeof form>) {
     markDirty()
     setForm((f) => ({ ...f, ...patch }))
+    setErros((prev) => {
+      const next = { ...prev }
+      for (const k of Object.keys(patch)) delete next[k as keyof typeof form]
+      return next
+    })
   }
 
   function handleClose() {
@@ -311,7 +319,15 @@ function NovoClienteModal({
   }
 
   async function salvar() {
-    if (!form.nome.trim()) return
+    if (!form.nome.trim()) {
+      setErros((prev) => ({ ...prev, nome: 'Este campo é obrigatório.' }))
+      return
+    }
+    const erroCpf = erroCpfCnpj(form.cpf)
+    if (erroCpf) {
+      toastError(erroCpf)
+      return
+    }
     setSaving(true)
     const { error } = await supabase.from('clientes').insert({
       owner_id: ownerId,
@@ -343,11 +359,12 @@ function NovoClienteModal({
         <div>
           <label className="label-field">Nome *</label>
           <input
-            className="input-field"
+            className={inputErrorClass(erros.nome)}
             value={form.nome}
             onChange={(e) => updateForm({ nome: e.target.value })}
             placeholder="Nome completo"
           />
+          <FieldError>{erros.nome}</FieldError>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div>
@@ -355,8 +372,9 @@ function NovoClienteModal({
             <input
               className="input-field"
               value={form.telefone}
-              onChange={(e) => updateForm({ telefone: e.target.value })}
+              onChange={(e) => updateForm({ telefone: mascaraTelefone(e.target.value) })}
               placeholder="(00) 00000-0000"
+              inputMode="numeric"
             />
           </div>
           <div>
@@ -415,7 +433,7 @@ function NovoClienteModal({
               <input
                 className="input-field"
                 value={form.numero}
-                onChange={(e) => updateForm({ numero: e.target.value })}
+                onChange={(e) => updateForm({ numero: mascaraNumeroEndereco(e.target.value) })}
               />
             </div>
           </div>

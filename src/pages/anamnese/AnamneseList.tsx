@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Plus, Search, ClipboardList, UserPlus } from 'lucide-react'
+import { Plus, Search, ClipboardList, UserPlus, Pencil } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toastError } from '@/store/toastStore'
 import { Skeleton, SkeletonList } from '@/components/Skeleton'
@@ -133,12 +133,15 @@ export default function AnamneseList() {
               <div className="card divide-y divide-slate-100">
                 {filtradas.map((f) => (
                   <div key={f.id} className="flex items-center gap-2 px-5 py-2 hover:bg-slate-50">
-                    <Link to={`/anamnese/${f.id}`} className="min-w-0 flex-1 py-2">
-                      <p className="truncate font-semibold text-ink-900">{f.clientes?.nome ?? 'Cliente'}</p>
-                      <p className="text-sm text-slate-400">
-                        {new Date(f.data).toLocaleDateString('pt-BR')} ·{' '}
-                        {f.status === 'finalizada' ? 'Finalizada' : 'Em andamento'}
-                      </p>
+                    <Link to={`/anamnese/${f.id}`} className="flex min-w-0 flex-1 items-center gap-2 py-2" title="Toque para editar">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-ink-900">{f.clientes?.nome ?? 'Cliente'}</p>
+                        <p className="text-sm text-slate-400">
+                          {new Date(f.data).toLocaleDateString('pt-BR')} ·{' '}
+                          {f.status === 'finalizada' ? 'Finalizada' : 'Em andamento'}
+                        </p>
+                      </div>
+                      <Pencil size={14} className="shrink-0 text-slate-300" />
                     </Link>
                     <NovaFichaButton clienteId={f.cliente_id} />
                   </div>
