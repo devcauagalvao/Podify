@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">podify</string>
+    <string name="title_activity_main">podify</string>
+    <string name="package_name">br.com.podify.app</string>
+    <string name="custom_url_scheme">br.com.podify.app</string>
+</resources>

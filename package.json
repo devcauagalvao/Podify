@@ -11,6 +11,9 @@
     "migrate:base44": "node --env-file=.env scripts/migrate-base44-storage.mjs"
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/cli": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
     "@react-pdf/renderer": "^4.5.1",
     "@supabase/supabase-js": "^2.45.4",
     "@vercel/analytics": "^2.0.1",
