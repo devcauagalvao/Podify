@@ -83,11 +83,23 @@ Deno.serve(async (req: Request) => {
 
     // Client "no nome do usuário" (JWT dele repassado) — RLS garante que
     // essa function só consegue ler/gravar o profile do próprio usuário
-    // que chamou, sem precisar de service role aqui.
+    // que chamou. Usado pra leitura e pros campos que o próprio usuário
+    // pode editar (ex: cpf_cnpj).
     const supabaseUser = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
+    );
+
+    // Client service role — SÓ pros campos de cobrança (asaas_customer_id,
+    // asaas_subscription_id, assinatura_expira_em). Esses campos são
+    // protegidos no banco pelo trigger profiles_protect_sensitive_columns:
+    // o usuário não pode alterá-los direto pela API (senão daria pra se
+    // dar plano Pro de graça ou "sequestrar" a assinatura de outra conta).
+    // Sempre filtrado por user.id, que vem do JWT validado abaixo.
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
     const { data: userData, error: userError } = await supabaseUser.auth.getUser();
@@ -148,7 +160,7 @@ Deno.serve(async (req: Request) => {
         }),
       });
       customerId = customer.id as string;
-      await supabaseUser.from("profiles").update({ asaas_customer_id: customerId }).eq("id", user.id);
+      await supabaseAdmin.from("profiles").update({ asaas_customer_id: customerId }).eq("id", user.id);
     }
 
     const subscriptionPayload: Record<string, unknown> = {
@@ -192,7 +204,7 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(subscriptionPayload),
     });
 
-    await supabaseUser.from("profiles").update({ asaas_subscription_id: subscription.id }).eq("id", user.id);
+    await supabaseAdmin.from("profiles").update({ asaas_subscription_id: subscription.id }).eq("id", user.id);
 
     // Confirma com o próprio Asaas qual foi o nextDueDate real que ELE
     // calculou pra essa subscription (fonte da verdade, nunca calculado
@@ -201,7 +213,7 @@ Deno.serve(async (req: Request) => {
     // cobre esse campo de qualquer forma quando o pagamento confirmar.
     const proximoVencimento = await buscarProximoVencimento(subscription.id);
     if (proximoVencimento) {
-      await supabaseUser.from("profiles").update({ assinatura_expira_em: proximoVencimento }).eq("id", user.id);
+      await supabaseAdmin.from("profiles").update({ assinatura_expira_em: proximoVencimento }).eq("id", user.id);
     }
 
     // primeira cobrança gerada pra essa assinatura (é dela que sai o QR
