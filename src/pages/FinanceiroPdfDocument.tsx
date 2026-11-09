@@ -157,7 +157,6 @@ export interface FinanceiroPdfRegistro {
 
 export interface FinanceiroPdfData {
   nomeClinica: string | null
-  cpfCnpj: string | null
   periodoLabel: string
   totalEntradas: number
   totalSaidas: number
@@ -173,7 +172,6 @@ export function FinanceiroPdfDocument({ d }: { d: FinanceiroPdfData }) {
         <View style={styles.headerRow} fixed>
           <View>
             <Text style={styles.clinicName}>{d.nomeClinica || 'Clínica de Podologia'}</Text>
-            {d.cpfCnpj && <Text style={styles.docTitle}>CPF/CNPJ: {d.cpfCnpj}</Text>}
             <Text style={styles.docTitle}>Extrato Financeiro</Text>
           </View>
           <View style={styles.headerRight}>

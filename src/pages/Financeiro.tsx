@@ -232,7 +232,6 @@ export default function Financeiro() {
     try {
       const docData: FinanceiroPdfData = {
         nomeClinica: profile?.nome_clinica || profile?.nome_completo || null,
-        cpfCnpj: profile?.cpf_cnpj ?? null,
         periodoLabel: periodoExtrato.label,
         totalEntradas: extratoEntradas,
         totalSaidas: extratoSaidas,
