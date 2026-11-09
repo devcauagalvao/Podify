@@ -1,5 +1,6 @@
 import { useEffect, lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { isAppContext } from '@/lib/platform'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/react'
 import { useAuthStore } from '@/store/authStore'
@@ -89,7 +90,13 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/" element={<LandingPage />} />
+        {/* No app (Play Store, TWA ou PWA instalado) a landing não faz sentido: a raiz vai
+            direto pro login, que já redireciona pro dashboard se houver
+            sessão. Na web a landing continua sendo a home. */}
+        <Route
+          path="/"
+          element={isAppContext() ? <Navigate to="/login" replace /> : <LandingPage />}
+        />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Suspense>

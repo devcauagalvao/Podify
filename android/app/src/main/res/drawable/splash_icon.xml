@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ícone do splash nativo (Android 12+). O sistema recorta o ícone num
+     círculo de 2/3 do tamanho; o inset garante a logo inteira e centralizada. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/splash_logo"
+    android:inset="16%" />

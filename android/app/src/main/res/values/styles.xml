@@ -13,10 +13,17 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Evita flash preto (modo escuro) entre o splash e o WebView carregar. -->
+        <item name="android:windowBackground">@android:color/white</item>
     </style>
 
 
+    <!-- Splash: fundo branco com a logo centralizada.
+         Android 12+: windowSplashScreen*; Android < 12: @drawable/splash. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@android:color/white</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/splash_icon</item>
+        <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
         <item name="android:background">@drawable/splash</item>
     </style>
 </resources>

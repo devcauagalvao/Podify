@@ -8,6 +8,9 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Registro manual em src/main.tsx: só na web. No app nativo o service
+      // worker prendia o WebView numa versão antiga em cache.
+      injectRegister: false,
       pwaAssets: {
         preset: 'minimal-2023',
         image: 'public/logo512x512.png',
@@ -24,6 +27,13 @@ export default defineConfig({
         orientation: 'portrait',
       },
       workbox: {
+        // Ativa o SW novo na hora. Essencial pro app nativo: quem atualiza
+        // pela Play Store ainda tem o SW antigo; ele precisa ser substituído
+        // imediatamente pra carregar o JS novo (que então remove o SW).
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        importScripts: ['sw-native-reload.js'],
         // Só cacheia assets estáticos (JS/CSS/fontes). Chamadas ao Supabase
         // (REST/Auth/Storage) nunca passam por nenhum urlPattern abaixo, logo
         // seguem sempre direto pra rede, sem cache.
